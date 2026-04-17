@@ -1,0 +1,13 @@
+{
+  "name": "swiss-concierge-jobs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Daily report generator for Swiss Concierge AI",
+  "scripts": {
+    "generate": "node generate-reports.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^3.3.2"
+  }
+}
