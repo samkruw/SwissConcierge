@@ -373,6 +373,28 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
             <div><label>Check-in</label><input type="text" id="locCheckin" placeholder="15:00"></div>
             <div><label>Check-out</label><input type="text" id="locCheckout" placeholder="11:00"></div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>Typ</label>
+              <select id="locType">
+                <option value="hotel">Hotel</option>
+                <option value="airbnb">Airbnb / Ferienwohnung</option>
+                <option value="bnb">B&B / Pension</option>
+                <option value="hostel">Hostel</option>
+              </select>
+            </div>
+            <div>
+              <label>Zielgruppe</label>
+              <select id="locGuest">
+                <option value="alle">Alle Gaeste</option>
+                <option value="familie">Familien mit Kindern</option>
+                <option value="kultur">Kulturtouristen</option>
+                <option value="business">Business</option>
+                <option value="paerchen">Paerchen / Romantik</option>
+                <option value="senioren">Senioren</option>
+              </select>
+            </div>
+          </div>
           <label>Adresse</label>
           <input type="text" id="locAddr" placeholder="Hauptstrasse 1, 8001 Zuerich">
           <button class="btn btn-p btn-full" onclick="addLocation()">Speichern & Koordinaten finden</button>
@@ -915,26 +937,117 @@ async function fetchWeather(lat, lon) {
   } catch(e) { return { ok:false }; }
 }
 
-// ── RESTAURANTS via OSM Overpass ──
-async function fetchRestaurants(lat, lon) {
+// ── OSM POIs via Overpass ──
+async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
+  const r = 800;
+
+  // Query basierend auf Typ und Zielgruppe
+  let amenityQuery = '';
+
+  // Immer: Restaurants + Cafes
+  amenityQuery += 'node["amenity"="restaurant"](around:'+r+','+lat+','+lon+');';
+  amenityQuery += 'node["amenity"="cafe"](around:'+r+','+lat+','+lon+');';
+
+  // Airbnb: Supermarkt, Baecker, Apotheke
+  if (locType === 'airbnb' || locType === 'bnb') {
+    amenityQuery += 'node["shop"="supermarket"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["shop"="bakery"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["shop"="convenience"](around:'+r+','+lat+','+lon+');';
+  }
+
+  // Familie: Spielplatz, Zoo, Kino, Schwimmbad
+  if (guestProfile === 'familie') {
+    amenityQuery += 'node["leisure"="playground"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="cinema"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["leisure"="swimming_pool"](around:1200,'+lat+','+lon+');';
+    amenityQuery += 'node["tourism"="zoo"](around:3000,'+lat+','+lon+');';
+    amenityQuery += 'node["leisure"="miniature_golf"](around:2000,'+lat+','+lon+');';
+  }
+
+  // Kultur: Museum, Theater, Galerie, Kirche
+  if (guestProfile === 'kultur') {
+    amenityQuery += 'node["tourism"="museum"](around:1500,'+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="theatre"](around:1500,'+lat+','+lon+');';
+    amenityQuery += 'node["tourism"="gallery"](around:1000,'+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="library"](around:800,'+lat+','+lon+');';
+    amenityQuery += 'node["historic"="monument"](around:1500,'+lat+','+lon+');';
+  }
+
+  // Paerchen: Bar, Spa, Aussichtspunkt
+  if (guestProfile === 'paerchen') {
+    amenityQuery += 'node["amenity"="bar"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["leisure"="spa"](around:2000,'+lat+','+lon+');';
+    amenityQuery += 'node["tourism"="viewpoint"](around:2000,'+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="cinema"](around:1500,'+lat+','+lon+');';
+  }
+
+  // Business: Coworking, Drucker, Bankomatstandort
+  if (guestProfile === 'business') {
+    amenityQuery += 'node["amenity"="coworking_space"](around:1000,'+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="bank"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="atm"](around:'+r+','+lat+','+lon+');';
+  }
+
+  // Senioren: Park, Apotheke, Arzt
+  if (guestProfile === 'senioren') {
+    amenityQuery += 'node["leisure"="park"](around:1000,'+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');';
+    amenityQuery += 'node["amenity"="doctors"](around:1000,'+lat+','+lon+');';
+  }
+
   try {
-    const r = 500;
-    const query = '[out:json][timeout:10];(node["amenity"="restaurant"](around:'+r+','+lat+','+lon+');node["amenity"="cafe"](around:'+r+','+lat+','+lon+'););out body 8;';
+    const query = '[out:json][timeout:15];('+amenityQuery+');out body 20;';
     const res = await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
     const d   = await res.json();
+
+    const typeLabels = {
+      restaurant:'Restaurant', cafe:'Cafe', bar:'Bar', theatre:'Theater',
+      museum:'Museum', cinema:'Kino', pharmacy:'Apotheke', library:'Bibliothek',
+      supermarket:'Supermarkt', bakery:'Baeckerei', convenience:'Lebensmittel',
+      coworking_space:'Coworking', bank:'Bank', atm:'Bankomat', doctors:'Arzt',
+      zoo:'Zoo', playground:'Spielplatz', swimming_pool:'Schwimmbad',
+      miniature_golf:'Minigolf', spa:'Spa', park:'Park', gallery:'Galerie',
+      viewpoint:'Aussichtspunkt'
+    };
+
+    const typeIcons = {
+      restaurant:'🍽️', cafe:'☕', bar:'🍸', theatre:'🎭',
+      museum:'🏛️', cinema:'🎬', pharmacy:'💊', library:'📚',
+      supermarket:'🛒', bakery:'🥐', convenience:'🏪',
+      coworking_space:'💻', bank:'🏦', atm:'💳', doctors:'🏥',
+      zoo:'🦁', playground:'🛝', swimming_pool:'🏊', miniature_golf:'⛳',
+      spa:'🧖', park:'🌳', gallery:'🖼️', viewpoint:'🔭'
+    };
+
     return (d.elements||[])
       .filter(e => e.tags && e.tags.name)
-      .map(e => ({
-        name:    e.tags.name,
-        type:    e.tags.cuisine || e.tags.amenity || 'Restaurant',
-        lat:     e.lat,
-        lon:     e.lon,
-        dist:    Math.round(Math.sqrt(Math.pow((e.lat-lat)*111000,2)+Math.pow((e.lon-lon)*111000*Math.cos(lat*Math.PI/180),2)))
-      }))
+      .map(e => {
+        const amenity = e.tags.amenity || e.tags.tourism || e.tags.leisure || e.tags.shop || e.tags.historic || 'place';
+        const dist = Math.round(Math.sqrt(
+          Math.pow((e.lat-lat)*111000,2) +
+          Math.pow((e.lon-lon)*111000*Math.cos(lat*Math.PI/180),2)
+        ));
+        const mapsUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.tags.name)+'+'+encodeURIComponent(e.tags['addr:city']||'')+'&query_place_id=';
+        const osmUrl  = 'https://www.openstreetmap.org/?mlat='+e.lat+'&mlon='+e.lon+'&zoom=17';
+        return {
+          name:    e.tags.name,
+          type:    amenity,
+          label:   typeLabels[amenity] || amenity,
+          icon:    typeIcons[amenity]  || '📍',
+          lat:     e.lat,
+          lon:     e.lon,
+          dist,
+          url:     osmUrl,
+          website: e.tags.website || e.tags['contact:website'] || null
+        };
+      })
+      .filter((e,i,arr) => arr.findIndex(x=>x.name===e.name)===i) // deduplicate
       .sort((a,b) => a.dist-b.dist)
-      .slice(0, 5);
-  } catch(e) { return []; }
+      .slice(0, 10);
+  } catch(e) { console.error('OSM error:', e); return []; }
 }
+
 
 // ── STANDORTE ──
 async function addLocation() {
@@ -951,7 +1064,9 @@ async function addLocation() {
     const geo = await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(addr)).then(r=>r.json());
     if(geo[0]){lat=parseFloat(geo[0].lat);lon=parseFloat(geo[0].lon);}
   } catch(e){}
-  await db.collection('locations').add({name,address:addr,wifiPassword:wifi,checkin,checkout,lat,lon,userId:currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const locType  = document.getElementById('locType').value;
+  const locGuest = document.getElementById('locGuest').value;
+  await db.collection('locations').add({name,address:addr,wifiPassword:wifi,checkin,checkout,lat,lon,locType,guestProfile:locGuest,userId:currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   toast('Standort gespeichert!');
   ['locName','locAddr','locWifi','locCheckin','locCheckout'].forEach(id=>document.getElementById(id).value='');
   await loadLocations(); await fillLocSelect();
@@ -1033,8 +1148,28 @@ async function generateReport() {
   const dateStr = new Date().toLocaleDateString('de-CH',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   const w = await fetchWeather(loc.lat, loc.lon);
   let wetterInfo = w.ok
-    ? 'Aktuelles Wetter: '+w.wetter+', '+w.tempAkt+'C (Max: '+w.tempMax+'C, Min: '+w.tempMin+'C), Wind: '+w.wind+' km/h'+(w.regen>0?', Niederschlag: '+w.regen+'mm':'')+'. Empfohlene Aktivitaeten: '+w.aktivitaeten+'.'
+    ? 'Aktuelles Wetter: '+w.wetter+', '+w.tempAkt+'C (Max: '+w.tempMax+'C, Min: '+w.tempMin+'C), Wind: '+w.wind+' km/h'+(w.regen>0?', Niederschlag: '+w.regen+'mm':'')+'. Empfohlene Aktivitaeten basierend auf Wetter: '+w.aktivitaeten+'.'
     : 'Typisches Schweizer Wetter fuer die Jahreszeit.';
+
+  // Kontext je nach Typ und Zielgruppe
+  const locType      = loc.locType || 'hotel';
+  const guestProfile = loc.guestProfile || 'alle';
+
+  const typeContext = {
+    hotel:   'Es handelt sich um ein Hotel. Erwaehne Hotelservices, Fruehstueck, Rezeption und lokale Ausflugstipps.',
+    airbnb:  'Es handelt sich um eine Airbnb-Ferienwohnung. Erwaehne praktische Infos: nahe Supermaerkte (Migros/Coop), Baeckereien, OeV-Verbindungen, Self-Check-in Hinweise falls relevant. Empfehle lokale Restaurants und Maerkte.',
+    bnb:     'Es handelt sich um ein B&B / eine Pension. Erwaehne das persoenliche Ambiente, Fruehstueck und lokale Geheimtipps des Gastgebers.',
+    hostel:  'Es handelt sich um ein Hostel. Empfehle guenstige Restaurants, Bars, kostenlose Aktivitaeten und OeV-Tipps.'
+  };
+
+  const guestContext = {
+    alle:     'Allgemeine Tipps fuer alle Gaeste.',
+    familie:  'Die Gaeste sind eine Familie mit Kindern. Erwaehne kinderfreundliche Aktivitaeten: Spielplaetze, Zoo, Schwimmbad, Kino, Minigolf. Erwaehne familienfreundliche Restaurants.',
+    kultur:   'Die Gaeste sind an Kultur interessiert. Erwaehne Museen, Theater, Galerien, historische Sehenswuerdigkeiten, Konzerte, Fuehrungen.',
+    business: 'Die Gaeste sind Geschaeftsreisende. Kurze, praktische Infos: OeV, Coworking, Banken, gute Restaurants fuer Businesslunch.',
+    paerchen: 'Die Gaeste sind ein Paerchen. Erwaehne romantische Aktivitaeten: schoene Restaurants, Aussichtspunkte, Spa, Weinbars, Abendprogramm.',
+    senioren: 'Die Gaeste sind Senioren. Erwaehne ruhige, gut erreichbare Aktivitaeten: Parks, Museen, gemutliche Cafes, barrierefreie Wege, OeV.'
+  };
 
   const langNames = {de:'Deutsch',en:'Englisch',fr:'Franzoesisch',it:'Italienisch'};
   const results = {};
@@ -1043,10 +1178,13 @@ async function generateReport() {
     prog.textContent = 'Generiere ' + langNames[lang] + '...';
     try {
       const prompt = 'Erstelle ein freundliches Gaeste-Briefing in der Sprache "'+langNames[lang]+'" fuer "'+loc.name+'" in '+loc.address+'. '+
-        'Datum: '+dateStr+'. '+wetterInfo+' '+
-        'Baue das aktuelle Wetter und passende Aktivitaetsempfehlungen konkret ein. '+
-        'Weitere Inhalte: herzlicher Willkommensgruss, 2-3 lokale Tipps (Restaurants, Sehenswuerdigkeiten), Hinweis auf OeV/SBB. '+
-        'Max 220 Woerter, herzlicher Ton, keine Ueberschriften, zusammenhaengender Text.';
+        'Datum: '+dateStr+'. '+
+        (typeContext[locType]||'')+' '+
+        (guestContext[guestProfile]||'')+' '+
+        wetterInfo+' '+
+        'Baue Wetter, Unterkunftstyp und Zielgruppe konkret in den Text ein. '+
+        'Hinweis auf SBB-Fahrplan nicht vergessen. '+
+        'Max 230 Woerter, herzlicher Ton, keine Ueberschriften, zusammenhaengender Fliestext.';
 
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
         method:'POST',
@@ -1143,7 +1281,7 @@ async function runJobNow() {
         const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
           method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
           body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:400,
-            messages:[{role:'user',content:'Erstelle ein freundliches Gaeste-Briefing in "'+langNames[lang]+'" fuer "'+loc.name+'" in '+loc.address+'. Datum: '+dateLong+'. '+wetterInfo+' Inhalte: Willkommensgruss, Wetter+Aktivitaeten, 2-3 lokale Tipps, SBB-Hinweis. Max 220 Woerter, herzlicher Ton, keine Ueberschriften.'}]
+            messages:[{role:'user',content:'Erstelle ein Gaeste-Briefing in "'+langNames[lang]+'" fuer "'+loc.name+'" ('+( loc.locType||'hotel')+') in '+loc.address+'. Zielgruppe: '+(loc.guestProfile||'alle')+'. Datum: '+dateLong+'. '+wetterInfo+' Inhalte passend zum Unterkunftstyp und zur Zielgruppe, Wetter+Aktivitaeten, lokale Tipps, SBB-Hinweis. Max 230 Woerter, herzlicher Ton, kein Ueberschriften.'}]
           })
         });
         const d=await res.json();
@@ -1191,7 +1329,7 @@ async function checkJobTrigger() {
         const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
           method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
           body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:400,
-            messages:[{role:'user',content:'Erstelle ein Gaeste-Briefing in "'+langNames[lang]+'" fuer "'+loc.name+'" in '+loc.address+'. '+dateLong+'. '+wetterInfo+' Max 220 Woerter, herzlicher Ton, keine Ueberschriften.'}]
+            messages:[{role:'user',content:'Erstelle ein Gaeste-Briefing in "'+langNames[lang]+'" fuer "'+loc.name+'" ('+(loc.locType||'hotel')+') in '+loc.address+'. Zielgruppe: '+(loc.guestProfile||'alle')+'. Datum: '+dateLong+'. '+wetterInfo+' Max 230 Woerter, herzlicher Ton, keine Ueberschriften.'}]
           })
         });
         const d=await res.json();
@@ -1255,36 +1393,47 @@ async function loadGuestData(id) {
   // Karte
   initMap(loc.lat, loc.lon, loc.name);
 
-  // Restaurants
+  // POIs laden
+  const locType      = loc.locType || 'hotel';
+  const guestProfile = loc.guestProfile || 'alle';
   document.getElementById('restoCard').style.display='block';
-  const restos = await fetchRestaurants(loc.lat, loc.lon);
+  const restoTitle = document.querySelector('#restoCard .g-card-title');
+  if(restoTitle){const titles={hotel:'Restaurants & Aktivitaeten',airbnb:'Einkaufen, Essen & Aktivitaeten',bnb:'Restaurants & Umgebung',hostel:'Guenstig Essen & Aktivitaeten'};restoTitle.textContent=titles[locType]||'Umgebung';}
+  const pois = await fetchOsmPOIs(loc.lat, loc.lon, locType, guestProfile);
   const restoEl = document.getElementById('restoList');
-  if(!restos.length){restoEl.innerHTML='<p style="color:var(--muted);font-size:13px">Keine Restaurants in 500m gefunden.</p>';}
-  else{
-    restoEl.innerHTML='<div class="restaurant-grid">'+restos.map(r=>{
-      const typeClean=r.type.replace(/_/g,' ');
-      return '<div class="resto-card"><div class="resto-icon">🍽️</div><div style="flex:1"><div class="resto-name">'+r.name+'</div><div class="resto-type">'+typeClean+'</div></div><div class="resto-dist">'+r.dist+'m</div></div>';
-    }).join('')+'</div>';
+  if(!pois.length){
+    restoEl.innerHTML='<p style="color:var(--muted);font-size:13px">Keine Orte in der Naehe gefunden – Radius wird erhoehen...</p>';
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'restaurant-grid';
+    pois.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'resto-card';
+      const link = p.website || p.url;
+      if(link){card.style.cursor='pointer';card.onclick=()=>window.open(link,'_blank');}
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'resto-icon';
+      iconDiv.textContent = p.icon;
+      const infoDiv = document.createElement('div');
+      infoDiv.style.flex = '1';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'resto-name';
+      nameDiv.textContent = p.name;
+      const typeDiv = document.createElement('div');
+      typeDiv.className = 'resto-type';
+      typeDiv.textContent = p.label;
+      infoDiv.appendChild(nameDiv);
+      infoDiv.appendChild(typeDiv);
+      const metaDiv = document.createElement('div');
+      metaDiv.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:4px';
+      const distDiv = document.createElement('div');
+      distDiv.className = 'resto-dist';
+      distDiv.textContent = p.dist+'m';
+      metaDiv.appendChild(distDiv);
+      if(link){const linkDiv=document.createElement('div');linkDiv.style.cssText='font-size:10px;color:var(--blue-bright)';linkDiv.textContent='Maps →';metaDiv.appendChild(linkDiv);}
+      card.appendChild(iconDiv);card.appendChild(infoDiv);card.appendChild(metaDiv);
+      wrap.appendChild(card);
+    });
+    restoEl.innerHTML='';
+    restoEl.appendChild(wrap);
   }
-}
-
-function switchLang() {
-  const lang = document.getElementById('guestLang').value;
-  if (guestReports && guestReports[lang]) {
-    document.getElementById('gContent').textContent = guestReports[lang];
-  } else if (guestReports && guestReports['de']) {
-    document.getElementById('gContent').textContent = guestReports['de'] + '\n\n(Uebersetzung nicht verfuegbar)';
-  }
-}
-
-function copyWifi(){navigator.clipboard.writeText(document.getElementById('gWifi').textContent).then(()=>toast('Passwort kopiert!'));}
-function initMap(lat,lon,name){
-  if(mapInstance){mapInstance.remove();mapInstance=null;}
-  mapInstance=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([lat,lon],15);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapInstance);
-  L.marker([lat,lon]).addTo(mapInstance).bindPopup(name).openPopup();
-}
-function openSBB(){window.open('https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von='+encodeURIComponent(hotelAddress),'_blank');}
-</script>
-</body>
-</html>
