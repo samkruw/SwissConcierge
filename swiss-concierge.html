@@ -744,7 +744,7 @@ async function addLocation() {
 }
 
 async function loadLocations() {
-  const snap = await db.collection('locations').where('userId','==',currentUser.uid).orderBy('name').get();
+  const snap = await db.collection('locations').where('userId','==',currentUser.uid).get();
   const el   = document.getElementById('locationList');
   if (snap.empty) {
     el.innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">Noch keine Standorte.</p>';
@@ -752,16 +752,18 @@ async function loadLocations() {
     return;
   }
 
-  // Reports von heute laden
-  const repSnap = await db.collection('reports')
-    .where('date','==',today()).get();
+  // Sort client-side (no index needed)
+  const docs = snap.docs.sort((a,b) => a.data().name.localeCompare(b.data().name));
+
+  // Reports von heute laden (single where = no composite index needed)
+  const repSnap = await db.collection('reports').where('date','==',today()).get();
   const hasRep = new Set(repSnap.docs.map(d=>d.data().locationId));
 
-  document.getElementById('statTotal').textContent = snap.size;
+  document.getElementById('statTotal').textContent = docs.length;
   document.getElementById('statRep').textContent   = hasRep.size;
-  document.getElementById('statMiss').textContent  = snap.size - hasRep.size;
+  document.getElementById('statMiss').textContent  = docs.length - hasRep.size;
 
-  el.innerHTML = snap.docs.map(doc => {
+  el.innerHTML = docs.map(doc => {
     const l = doc.data();
     return `<div class="loc-item">
       <div style="flex:1;min-width:0">
@@ -817,8 +819,9 @@ async function loadReports() {
 
 // ── ERSTELLEN ──
 async function fillLocSelect() {
-  const snap = await db.collection('locations').where('userId','==',currentUser.uid).orderBy('name').get();
-  document.getElementById('manualLoc').innerHTML = snap.docs.map(d=>`<option value="${d.id}">${d.data().name}</option>`).join('');
+  const snap = await db.collection('locations').where('userId','==',currentUser.uid).get();
+  const docs = snap.docs.sort((a,b) => a.data().name.localeCompare(b.data().name));
+  document.getElementById('manualLoc').innerHTML = docs.map(d=>`<option value="${d.id}">${d.data().name}</option>`).join('');
 }
 
 async function saveManual() {
