@@ -325,7 +325,9 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       <button class="nav-btn active" onclick="switchPage('standorte')" id="nav-standorte"><span class="ni">🏨</span> Standorte</button>
       <button class="nav-btn" onclick="switchPage('reports')" id="nav-reports"><span class="ni">📄</span> Reports</button>
       <button class="nav-btn" onclick="switchPage('erstellen')" id="nav-erstellen"><span class="ni">✍️</span> Erstellen</button>
-      <div class="nav-section" style="margin-top:10px">Konto</div>
+      <div class="nav-section" style="margin-top:10px">Admin</div>
+      <button class="nav-btn" onclick="switchPage('kunden')" id="nav-kunden" style="display:none"><span class="ni">👥</span> Kunden</button>
+      <div class="nav-section" style="margin-top:6px">Konto</div>
       <button class="nav-btn" onclick="switchPage('billing')" id="nav-billing"><span class="ni">💳</span> Abonnement</button>
       <button class="nav-btn" onclick="switchPage('settings')" id="nav-settings"><span class="ni">⚙️</span> Einstellungen</button>
     </nav>
@@ -453,6 +455,37 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
             <input type="number" id="creditAddAmount" placeholder="Anzahl Credits" style="flex:1">
             <button class="btn btn-p" onclick="addCreditsManual()">Gutschreiben</button>
           </div>
+        </div>
+      </div>
+
+      <!-- KUNDEN -->
+      <div id="page-kunden" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Kunde aktivieren / Plan setzen</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
+            Trage die Email des Kunden ein (muss sich vorher registriert haben) und setze den Plan nach der Stripe-Zahlung.
+          </p>
+          <label>Email des Kunden</label>
+          <input type="email" id="customerEmail" placeholder="kunde@beispiel.ch">
+          <label>Plan</label>
+          <select id="customerPlan">
+            <option value="starter">Starter – CHF 29/Mt (1 Standort, 30 Credits)</option>
+            <option value="pro">Pro – CHF 79/Mt (5 Standorte, 200 Credits)</option>
+            <option value="enterprise">Enterprise – CHF 199/Mt (unbegrenzt)</option>
+            <option value="trial">Trial (10 Credits)</option>
+          </select>
+          <label>Credits manuell setzen</label>
+          <input type="number" id="customerCredits" placeholder="z.B. 30" value="30">
+          <button class="btn btn-p btn-full" onclick="activateCustomer()">Plan aktivieren</button>
+          <div id="customerStatus" style="margin-top:12px;font-size:13px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Alle Kunden</div>
+            <button class="btn btn-g btn-sm" onclick="loadCustomers()">Aktualisieren</button>
+          </div>
+          <div id="customerList"><div style="color:var(--muted);font-size:13px">Klicke auf Aktualisieren...</div></div>
         </div>
       </div>
 
@@ -691,6 +724,11 @@ function renderPlanUI() {
   }
   document.getElementById('locLimitBadge').textContent   = 'Max. '+cfg.locations+' Standort'+(cfg.locations>1?'e':'');
   document.getElementById('locLimitBadge').style.display = 'inline-flex';
+
+  // Admin-Tab nur fuer Admins anzeigen
+  const isAdmin = userProfile && userProfile.isAdmin === true;
+  const kundenNav = document.getElementById('nav-kunden');
+  if (kundenNav) kundenNav.style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('billingInfo').innerHTML =
     '<span class="badge b-blue">'+cfg.label+'</span> <span style="font-size:13px;color:var(--text2);margin-left:8px">Max. '+cfg.locations+' Standort'+(cfg.locations>1?'e':'')+' · Credits: '+(isCredit?credits:'unbegrenzt')+'</span>';
 }
@@ -722,6 +760,84 @@ async function doRegister() {
   try { await auth.createUserWithEmailAndPassword(email, pw); }
   catch(e) { document.getElementById('authErr').textContent = e.message; }
 }
+
+// ── KUNDEN VERWALTUNG ──
+async function activateCustomer() {
+  const email   = document.getElementById('customerEmail').value.trim().toLowerCase();
+  const plan    = document.getElementById('customerPlan').value;
+  const credits = parseInt(document.getElementById('customerCredits').value) || 0;
+  const statusEl = document.getElementById('customerStatus');
+
+  if (!email) { toast('Email eingeben!','red'); return; }
+
+  statusEl.innerHTML = '<span class="badge b-amber">Suche Kunde...</span>';
+
+  // User in Firestore nach Email suchen
+  const snap = await db.collection('users').where('email','==',email).get();
+
+  if (snap.empty) {
+    statusEl.innerHTML = '<span class="badge b-red">Kunde nicht gefunden – hat sich noch nicht registriert!</span>' +
+      '<br><small style="color:var(--muted);margin-top:6px;display:block">Der Kunde muss sich zuerst in der App registrieren. Danach hier den Plan setzen.</small>';
+    return;
+  }
+
+  const userDoc = snap.docs[0];
+  await userDoc.ref.update({ plan, credits });
+
+  statusEl.innerHTML = '<span class="badge b-green">Plan aktiviert!</span> ' +
+    '<span style="font-size:13px;color:var(--text2)">' + email + ' → ' + plan + ' (' + credits + ' Credits)</span>';
+
+  toast('Plan aktiviert!');
+  document.getElementById('customerEmail').value = '';
+  await loadCustomers();
+}
+
+async function loadCustomers() {
+  const el = document.getElementById('customerList');
+  el.innerHTML = '<div style="color:var(--muted);font-size:13px">Lade...</div>';
+  const snap = await db.collection('users').get();
+  if (snap.empty) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">Noch keine Kunden.</p>'; return; }
+  const planColors = { trial:'b-amber', starter:'b-blue', pro:'b-purple', enterprise:'b-green' };
+  const wrap = document.createElement('div');
+  wrap.className = 'tbl-wrap';
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr><th>Email</th><th>Plan</th><th>Credits</th><th>Aktion</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  snap.docs.sort((a,b)=>(a.data().email||'').localeCompare(b.data().email||'')).forEach(doc => {
+    const u = doc.data();
+    const cls = planColors[u.plan] || 'b-amber';
+    const tr = document.createElement('tr');
+    const emailTd = document.createElement('td');
+    emailTd.style.color = 'var(--text)';
+    emailTd.textContent = u.email || '–';
+    const planTd = document.createElement('td');
+    planTd.innerHTML = '<span class="badge ' + cls + '">' + (u.plan||'trial') + '</span>';
+    const creditsTd = document.createElement('td');
+    creditsTd.style.color = 'var(--text2)';
+    creditsTd.textContent = u.credits || 0;
+    const actionTd = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-o btn-sm';
+    btn.textContent = 'Aendern';
+    btn.onclick = () => quickSetPlan(doc.id, u.email||'');
+    actionTd.appendChild(btn);
+    tr.appendChild(emailTd); tr.appendChild(planTd); tr.appendChild(creditsTd); tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  el.innerHTML = '';
+  el.appendChild(wrap);
+}
+async function quickSetPlan(userId, email) {
+  const plan = prompt('Neuer Plan fuer ' + email + ':\nstarter / pro / enterprise / trial');
+  if (!plan || !['starter','pro','enterprise','trial'].includes(plan)) { toast('Ungültiger Plan','red'); return; }
+  const creditsMap = {starter:30,pro:200,enterprise:9999,trial:10};
+  await db.collection('users').doc(userId).update({ plan, credits: creditsMap[plan] });
+  toast('Plan geaendert!');
+  await loadCustomers();
+}
+
 async function doLogout() { await auth.signOut(); }
 
 // ── STRIPE ──
@@ -732,8 +848,8 @@ function goToStripe(key) {
 }
 
 // ── NAV ──
-const PAGES  = ['standorte','reports','erstellen','billing','settings'];
-const TITLES = {standorte:'Standorte',reports:'Tagesreports',erstellen:'Report erstellen',billing:'Abonnement',settings:'Einstellungen'};
+const PAGES  = ['standorte','reports','erstellen','kunden','billing','settings'];
+const TITLES = {standorte:'Standorte',reports:'Tagesreports',erstellen:'Report erstellen',kunden:'Kunden verwalten',billing:'Abonnement',settings:'Einstellungen'};
 function switchPage(name) {
   PAGES.forEach(p => {
     document.getElementById('page-'+p).style.display = p===name?'block':'none';
