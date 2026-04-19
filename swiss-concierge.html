@@ -856,7 +856,7 @@ async function generateReport() {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'llama3-70b-8192',messages:[{role:'user',content:`Erstelle ein freundliches Gäste-Briefing auf Deutsch für "${loc.name}" in ${loc.address}. Datum: ${dateStr}. Inhalte: Willkommensgruss, allgemeiner Schweizer Wetter-Hinweis, 2-3 Tipps zur Umgebung (Restaurants, Sehenswürdigkeiten, ÖV), Hinweis auf SBB-Fahrplan. Max 200 Wörter, herzlicher Ton, keine Überschriften.`}]})
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:`Erstelle ein freundliches Gäste-Briefing auf Deutsch für "${loc.name}" in ${loc.address}. Datum: ${dateStr}. Inhalte: Willkommensgruss, allgemeiner Schweizer Wetter-Hinweis, 2-3 Tipps zur Umgebung (Restaurants, Sehenswürdigkeiten, ÖV), Hinweis auf SBB-Fahrplan. Max 200 Wörter, herzlicher Ton, keine Überschriften.`}]})
     });
     const d = await res.json();
     if(d.error) throw new Error(d.error.message);
@@ -960,7 +960,7 @@ async function runJobNow() {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'llama3-70b-8192', max_tokens: 400,
+          model: 'llama-3.3-70b-versatile', max_tokens: 400,
           messages: [{ role: 'user', content: 'Erstelle ein freundliches Gaeste-Briefing auf Deutsch fuer "' + loc.name + '" in ' + loc.address + '. Datum: ' + dateLong + '. Inhalte: Willkommensgruss, allgemeiner Schweizer Wetter-Hinweis, 2-3 lokale Tipps (Restaurants, Sehenswuerdigkeiten, OeV), Hinweis auf SBB-Fahrplan. Max 200 Woerter, herzlicher Ton, keine Ueberschriften.' }]
         })
       });
@@ -1009,7 +1009,7 @@ async function checkJobTrigger() {
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method:'POST', headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-        body:JSON.stringify({ model:'llama3-70b-8192', max_tokens:400,
+        body:JSON.stringify({ model:'llama-3.3-70b-versatile', max_tokens:400,
           messages:[{role:'user',content:'Erstelle ein freundliches Gaeste-Briefing auf Deutsch fuer "' + loc.name + '" in ' + loc.address + '. Datum: ' + dateLong + '. Max 200 Woerter, herzlicher Ton, keine Ueberschriften.'}]
         })
       });
@@ -1068,7 +1068,7 @@ async function translateOnTheFly(){
   try{
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'llama3-8b-8192',messages:[{role:'user',content:`Translate this concierge briefing to language code "${lang}". Return ONLY the translated text:\n\n${originalText}`}]})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:`Translate this concierge briefing to language code "${lang}". Return ONLY the translated text:\n\n${originalText}`}]})
     });
     const d=await res.json();
     document.getElementById('gContent').textContent=d.choices[0].message.content;
