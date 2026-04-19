@@ -427,18 +427,33 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;}
           <div id="groqStatus" style="margin-top:12px;font-size:13px"></div>
         </div>
         <div class="card">
-          <div class="card-hd"><div class="card-title">🤖 GitHub Actions Job</div></div>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:12px">
-            Der tägliche Report-Job läuft via GitHub Actions um 06:00 CH-Zeit.<br>
-            Secrets die du in GitHub hinterlegen musst:
+          <div class="card-hd"><div class="card-title">⏰ Automatischer Tages-Job</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">
+            cron-job.org ruft täglich um 06:00 die Trigger-URL auf. Die App generiert dann automatisch alle Reports via Groq und speichert sie in Firebase.
           </p>
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.8">
-            FIREBASE_PROJECT_ID = <span style="color:var(--blue)">dein-projekt-id</span><br>
-            FIREBASE_CLIENT_EMAIL = <span style="color:var(--blue)">service-account@projekt.iam.gserviceaccount.com</span><br>
-            FIREBASE_PRIVATE_KEY = <span style="color:var(--blue)">-----BEGIN PRIVATE KEY-----...</span><br>
-            GROQ_API_KEY = <span style="color:var(--blue)">gsk_...</span>
+          <label>Job-Token (geheim halten!)</label>
+          <div style="display:flex;gap:8px;margin-bottom:4px">
+            <input type="text" id="jobTokenInput" placeholder="Beliebiges Passwort, z.B. meinToken123" style="flex:1;font-family:'DM Mono',monospace">
+            <button class="btn btn-p" onclick="saveJobToken()">Speichern</button>
           </div>
-          <p style="font-size:11px;color:var(--muted);margin-top:10px">Service Account: Firebase Console → Projekteinstellungen → Dienstkonten → Neuen privaten Schlüssel generieren</p>
+          <div id="jobTokenStatus" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+          <label>Deine Trigger-URL (für cron-job.org)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="triggerUrlDisplay" readonly style="flex:1;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface2)">
+            <button class="btn btn-o btn-sm" onclick="copyTriggerUrl()">Kopieren</button>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin-top:8px">Diese URL bei cron-job.org eintragen → täglich 06:00 aufrufen lassen.</p>
+          <div style="background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:10px;padding:14px;margin-top:16px">
+            <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px">cron-job.org Einrichtung (einmalig, 2 Min.)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.8">
+              1. cron-job.org → Konto erstellen (gratis)<br>
+              2. "Create cronjob" → Trigger-URL einfügen<br>
+              3. Schedule: Daily → 06:00 Uhr<br>
+              4. Speichern → fertig
+            </div>
+          </div>
+          <button class="btn btn-o btn-full" style="margin-top:12px" onclick="runJobNow()">Jetzt manuell ausfuhren (Test)</button>
+          <div id="jobLog" style="margin-top:12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:none;max-height:200px;overflow-y:auto;line-height:1.8"></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">ℹ️ App Info</div></div>
@@ -500,23 +515,23 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;}
 // ════════════════════════════════════════
 // ❗ FIREBASE CONFIG – eintragen
 // ════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyD6TmhVacnAL0Z06AIDEVenA2LXC8lLpt8",
-  authDomain: "swissconcierge-9ed88.firebaseapp.com",
-  projectId: "swissconcierge-9ed88",
-  storageBucket: "swissconcierge-9ed88.firebasestorage.app",
-  messagingSenderId: "1022632002696",
-  appId: "1:1022632002696:web:a70396eee4523485a28b3d",
-  measurementId: "G-RRS84YXFVZ"
+const FIREBASE_CONFIG = {
+  apiKey:            "DEIN_API_KEY",
+  authDomain:        "DEIN_PROJEKT.firebaseapp.com",
+  projectId:         "DEIN_PROJEKT_ID",
+  storageBucket:     "DEIN_PROJEKT.appspot.com",
+  messagingSenderId: "DEINE_SENDER_ID",
+  appId:             "DEINE_APP_ID"
 };
+
 // ❗ STRIPE PAYMENT LINKS
 const STRIPE_LINKS = {
-  starter:    https://buy.stripe.com/4gM14nb8gg9Lc3sdrW18c00,
-  pro:        https://buy.stripe.com/6oUaEX1xG6zb0kKbjO18c01,
-  enterprise: https://buy.stripe.com/00wdR95NW2iV1oOfA418c03,
-  credits50:  https://buy.stripe.com/3cIaEX5NWcXzaZo5Zu18c04,
-  credits200: https://buy.stripe.com/6oUeVda4c7DfebAew018c05,
-  portal:     billing.stripe.com/p/login/4gM14nb8gg9Lc3sdrW18c00
+  starter:    "STRIPE_LINK_STARTER",
+  pro:        "STRIPE_LINK_PRO",
+  enterprise: "STRIPE_LINK_ENTERPRISE",
+  credits50:  "STRIPE_LINK_CREDITS_50",
+  credits200: "STRIPE_LINK_CREDITS_200",
+  portal:     "STRIPE_CUSTOMER_PORTAL_LINK"
 };
 
 // PLAN CONFIG
@@ -539,7 +554,10 @@ const getGroqKey = () => localStorage.getItem('concierge_groq_key') || '';
 const today = () => new Date().toISOString().split('T')[0];
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Job-Trigger via URL ?job=TOKEN (cron-job.org)
+  if (await checkJobTrigger()) return;
+
   const id = new URLSearchParams(window.location.search).get('id');
   if (id) {
     showScreen('guest');
@@ -585,6 +603,7 @@ async function initAfterLogin() {
   document.getElementById('settingsPlan').textContent = PLANS[plan]?.label || plan;
   document.getElementById('portalLink').href = STRIPE_LINKS.portal;
   checkGroqStatus();
+  checkJobTokenStatus();
   await loadLocations();
   await loadReports();
   await fillLocSelect();
@@ -865,6 +884,145 @@ function checkGroqStatus(){
   el.innerHTML=key
     ?`<span class="badge b-green">✓ Key gesetzt</span> <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${key.substring(0,8)}…</span>`
     :`<span class="badge b-amber">⚠ Kein Key gesetzt</span>`;
+}
+
+// ── JOB TRIGGER (cron-job.org) ──
+function saveJobToken() {
+  const t = document.getElementById('jobTokenInput').value.trim();
+  if (!t) { toast('Token leer!','red'); return; }
+  localStorage.setItem('concierge_job_token', t);
+  document.getElementById('jobTokenInput').value = '';
+  toast('Token gespeichert!');
+  updateTriggerUrl();
+  checkJobTokenStatus();
+}
+
+function updateTriggerUrl() {
+  const token = localStorage.getItem('concierge_job_token') || '';
+  const base  = window.location.href.split('?')[0];
+  const url   = token ? base + '?job=' + encodeURIComponent(token) : '(Token zuerst setzen)';
+  const el    = document.getElementById('triggerUrlDisplay');
+  if (el) el.value = url;
+}
+
+function copyTriggerUrl() {
+  const el = document.getElementById('triggerUrlDisplay');
+  if (!el || !el.value || el.value.includes('Token')) { toast('Token zuerst setzen!','amber'); return; }
+  navigator.clipboard.writeText(el.value).then(() => toast('URL kopiert!'));
+}
+
+function checkJobTokenStatus() {
+  const t  = localStorage.getItem('concierge_job_token');
+  const el = document.getElementById('jobTokenStatus');
+  if (!el) return;
+  el.innerHTML = t
+    ? '<span class="badge b-green">Token gesetzt</span> <span style="font-family:monospace;font-size:11px;color:var(--muted)">' + t.substring(0,6) + '...</span>'
+    : '<span class="badge b-amber">Kein Token – bitte setzen</span>';
+  updateTriggerUrl();
+}
+
+async function runJobNow() {
+  const key = getGroqKey();
+  if (!key) { toast('Groq Key fehlt!','amber'); return; }
+
+  const logEl = document.getElementById('jobLog');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+
+  function log(msg, color) {
+    const line = document.createElement('div');
+    line.style.color = color || 'var(--text2)';
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const dateStr  = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Zurich', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+  const dateLong = new Intl.DateTimeFormat('de-CH', { timeZone:'Europe/Zurich', weekday:'long', day:'2-digit', month:'long', year:'numeric' }).format(new Date());
+
+  log('=== Report-Job gestartet ===');
+  log('Datum: ' + dateLong);
+
+  const snap = await db.collection('locations').get();
+  if (snap.empty) { log('Keine Locations gefunden.', 'var(--amber)'); return; }
+  log(snap.size + ' Location(s) gefunden');
+
+  let ok = 0, fail = 0;
+
+  for (const doc of snap.docs) {
+    const loc = doc.data();
+    log('Generiere: ' + loc.name);
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama3-70b-8192', max_tokens: 400,
+          messages: [{ role: 'user', content: 'Erstelle ein freundliches Gaeste-Briefing auf Deutsch fuer "' + loc.name + '" in ' + loc.address + '. Datum: ' + dateLong + '. Inhalte: Willkommensgruss, allgemeiner Schweizer Wetter-Hinweis, 2-3 lokale Tipps (Restaurants, Sehenswuerdigkeiten, OeV), Hinweis auf SBB-Fahrplan. Max 200 Woerter, herzlicher Ton, keine Ueberschriften.' }]
+        })
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error.message);
+      const content = d.choices[0].message.content.trim();
+      const existing = await db.collection('reports').where('locationId','==',doc.id).where('date','==',dateStr).get();
+      if (!existing.empty) {
+        await existing.docs[0].ref.update({ content, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), source:'cron' });
+      } else {
+        await db.collection('reports').add({ locationId:doc.id, date:dateStr, content, source:'cron', createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+      }
+      log('  OK – ' + content.length + ' Zeichen', '#059669');
+      ok++;
+      await new Promise(r => setTimeout(r, 1000));
+    } catch(e) { log('  Fehler: ' + e.message, 'var(--red)'); fail++; }
+  }
+
+  log('=== Fertig: ' + ok + ' OK' + (fail ? ', ' + fail + ' Fehler' : '') + ' ===', ok > 0 ? '#059669' : 'var(--red)');
+  if (ok > 0) { toast('Reports generiert!'); await loadReports(); }
+}
+
+async function checkJobTrigger() {
+  const jobParam = new URLSearchParams(window.location.search).get('job');
+  if (!jobParam) return false;
+  const savedToken = localStorage.getItem('concierge_job_token');
+  if (!savedToken || jobParam !== savedToken) {
+    document.body.innerHTML = '<div style="padding:40px;font-family:monospace;color:red">403 Invalid token</div>';
+    return true;
+  }
+  document.body.innerHTML = '<div id="jobOut" style="padding:40px;font-family:monospace;font-size:13px;background:#0f172a;color:#94a3b8;min-height:100vh;white-space:pre-wrap"></div>';
+  const out = document.getElementById('jobOut');
+  const log = (msg) => { out.textContent += msg + '\n'; };
+  log('Swiss Concierge AI – Automated Report Job');
+  log('Time: ' + new Date().toISOString());
+  const key = localStorage.getItem('concierge_groq_key');
+  if (!key) { log('ERROR: Groq key not set'); return true; }
+  const dateStr  = new Intl.DateTimeFormat('en-CA', { timeZone:'Europe/Zurich', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date());
+  const dateLong = new Intl.DateTimeFormat('de-CH', { timeZone:'Europe/Zurich', weekday:'long', day:'2-digit', month:'long', year:'numeric' }).format(new Date());
+  const snap = await db.collection('locations').get();
+  log('Locations: ' + snap.size);
+  let ok = 0, fail = 0;
+  for (const doc of snap.docs) {
+    const loc = doc.data();
+    log('Processing: ' + loc.name);
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method:'POST', headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+        body:JSON.stringify({ model:'llama3-70b-8192', max_tokens:400,
+          messages:[{role:'user',content:'Erstelle ein freundliches Gaeste-Briefing auf Deutsch fuer "' + loc.name + '" in ' + loc.address + '. Datum: ' + dateLong + '. Max 200 Woerter, herzlicher Ton, keine Ueberschriften.'}]
+        })
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error.message);
+      const content = d.choices[0].message.content.trim();
+      const existing = await db.collection('reports').where('locationId','==',doc.id).where('date','==',dateStr).get();
+      if (!existing.empty) { await existing.docs[0].ref.update({content, updatedAt:firebase.firestore.FieldValue.serverTimestamp(), source:'cron'}); }
+      else { await db.collection('reports').add({locationId:doc.id,date:dateStr,content,source:'cron',createdAt:firebase.firestore.FieldValue.serverTimestamp()}); }
+      log('  OK – ' + content.length + ' chars');
+      ok++;
+      await new Promise(r => setTimeout(r, 1000));
+    } catch(e) { log('  ERROR: ' + e.message); fail++; }
+  }
+  log('Done: ' + ok + ' ok, ' + fail + ' failed');
+  return true;
 }
 
 // ── GAST VIEW ──
