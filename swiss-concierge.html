@@ -515,24 +515,24 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;}
 // ════════════════════════════════════════
 // ❗ FIREBASE CONFIG – eintragen
 // ════════════════════════════════════════
-cconst firebaseConfig = {
-  apiKey: "AIzaSyD6TmhVacnAL0Z06AIDEVenA2LXC8lLpt8",
-  authDomain: "swissconcierge-9ed88.firebaseapp.com",
-  projectId: "swissconcierge-9ed88",
-  storageBucket: "swissconcierge-9ed88.firebasestorage.app",
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyD6TmhVacnAL0Z06AIDEVenA2LXC8lLpt8",
+  authDomain:        "swissconcierge-9ed88.firebaseapp.com",
+  projectId:         "swissconcierge-9ed88",
+  storageBucket:     "swissconcierge-9ed88.firebasestorage.app",
   messagingSenderId: "1022632002696",
-  appId: "1:1022632002696:web:a70396eee4523485a28b3d",
-  measurementId: "G-RRS84YXFVZ"
+  appId:             "1:1022632002696:web:a70396eee4523485a28b3d"
 };
 
 // ❗ STRIPE PAYMENT LINKS
 const STRIPE_LINKS = {
-  starter:    https://buy.stripe.com/4gM14nb8gg9Lc3sdrW18c00
-  pro:        https://buy.stripe.com/6oUaEX1xG6zb0kKbjO18c01
-  enterprise: https://buy.stripe.com/00wdR95NW2iV1oOfA418c03
-  credits50:  https://buy.stripe.com/3cIaEX5NWcXzaZo5Zu18c04
-  credits200: https://buy.stripe.com/6oUeVda4c7DfebAew018c05
-  portal:   billing.stripe.com/p/login/4gM14nb8gg9Lc3sdrW18c00
+  starter:    "https://buy.stripe.com/4gM14nb8gg9Lc3sdrW18c00",
+  pro:        "https://buy.stripe.com/6oUaEX1xG6zb0kKbjO18c01",
+  enterprise: "https://buy.stripe.com/00wdR95NW2iV1oOfA418c03",
+  credits50:  "https://buy.stripe.com/3cIaEX5NWcXzaZo5Zu18c04",
+  credits200: "https://buy.stripe.com/6oUeVda4c7DfebAew018c05",
+  portal:     "https://billing.stripe.com/p/login/4gM14nb8gg9Lc3sdrW18c00"
+};
 
 // PLAN CONFIG
 const PLANS = {
