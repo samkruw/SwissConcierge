@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Concierge AI</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+/* ══ DARK MODE – Landing Page Style ══ */
+:root {
+  --bg:      #0a0f1e;
+  --bg2:     #111827;
+  --bg3:     #1a2235;
+  --surface: #111827;
+  --surface2:#1a2235;
+  --border:  rgba(255,255,255,.08);
+  --border2: rgba(255,255,255,.12);
+  --blue:    #2563eb;
+  --blue-lt: rgba(37,99,235,.15);
+  --blue-mid:rgba(37,99,235,.3);
+  --blue-bright:#3b82f6;
+  --red:     #ef4444;
+  --red-lt:  rgba(239,68,68,.15);
+  --green:   #10b981;
+  --green-lt:rgba(16,185,129,.15);
+  --amber:   #f59e0b;
+  --amber-lt:rgba(245,158,11,.15);
+  --purple:  #7c3aed;
+  --purple-lt:rgba(124,58,237,.15);
+  --text:    #f1f5f9;
+  --text2:   #94a3b8;
+  --muted:   #64748b;
+  --sw:      220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+
+/* Grid background */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
+  background-size:48px 48px;}
+
+/* ── AUTH ── */
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;position:relative;z-index:1;}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.auth-logo-icon{width:52px;height:52px;background:var(--blue);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;}
+.auth-logo h1{font-size:20px;font-weight:700;color:var(--text);}
+.auth-logo p{font-size:13px;color:var(--muted);margin-top:4px;}
+.auth-tabs{display:flex;background:rgba(255,255,255,.05);border-radius:10px;padding:3px;margin-bottom:24px;}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:.15s;}
+.auth-tab.active{background:var(--blue);color:white;}
+.auth-label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin:10px 0 4px;}
+.auth-input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
+.auth-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
+.auth-btn{width:100%;margin-top:16px;padding:12px;background:var(--blue);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;}
+.auth-btn:hover{background:#1d4ed8;}
+.auth-err{font-size:12px;color:#f87171;margin-top:10px;text-align:center;min-height:16px;}
+.auth-link{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
+.auth-link a{color:var(--blue-bright);text-decoration:none;}
+
+/* ── PAYWALL ── */
+#paywallScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;position:relative;z-index:1;}
+.paywall-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;width:100%;max-width:640px;}
+.paywall-header{text-align:center;margin-bottom:28px;}
+.paywall-header h2{font-size:22px;font-weight:700;margin-bottom:8px;}
+.paywall-header p{font-size:14px;color:var(--text2);}
+.plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px;}
+.plan-card{border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:.2s;text-align:center;position:relative;background:var(--bg3);}
+.plan-card:hover{border-color:var(--blue);transform:translateY(-2px);}
+.plan-card.popular{border-color:var(--blue);background:var(--blue-lt);}
+.plan-card .pop-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;}
+.plan-card-name{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.plan-card-price{font-size:26px;font-weight:800;color:var(--text);}
+.plan-card-price span{font-size:12px;font-weight:400;color:var(--muted);}
+.plan-card-desc{font-size:11px;color:var(--text2);margin-top:6px;}
+.paywall-divider{text-align:center;color:var(--muted);font-size:12px;margin:16px 0;position:relative;}
+.paywall-divider::before,.paywall-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border);}
+.paywall-divider::before{left:0;}.paywall-divider::after{right:0;}
+.credit-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+.credit-btn{border:1px solid var(--border);border-radius:10px;padding:12px 18px;cursor:pointer;text-align:center;transition:.15s;background:var(--bg3);}
+.credit-btn:hover{border-color:var(--blue);}
+.credit-btn-val{font-size:18px;font-weight:700;}
+.credit-btn-price{font-size:12px;color:var(--muted);}
+.paywall-logout{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
+.paywall-logout a{color:var(--red);cursor:pointer;}
+
+/* ── SIDEBAR ── */
+#adminLayout{display:flex;min-height:100vh;position:relative;z-index:1;}
+.sidebar{width:var(--sw);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .25s ease;}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-logo-icon{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.sb-logo-name{font-weight:700;font-size:14px;color:var(--text);}
+.sb-logo-sub{font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:8px 8px 4px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+.nav-btn:hover{background:var(--bg3);color:var(--text);}
+.nav-btn.active{background:var(--blue-lt);color:var(--blue-bright);}
+.nav-btn .ni{font-size:15px;width:20px;text-align:center;}
+.sb-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
+.plan-pill{margin:8px 16px 0;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;}
+.plan-pill.trial{background:var(--amber-lt);color:var(--amber);}
+.plan-pill.starter{background:var(--blue-lt);color:var(--blue-bright);}
+.plan-pill.pro{background:var(--purple-lt);color:var(--purple);}
+.plan-pill.enterprise{background:var(--green-lt);color:var(--green);}
+.credits-bar{margin:6px 16px 0;font-size:11px;color:var(--muted);}
+.credits-progress{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
+.credits-progress-inner{height:100%;background:var(--blue);border-radius:2px;transition:.3s;}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-title{font-weight:600;font-size:15px;color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.hamburger{display:none;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text);}
+.content{padding:24px;max-width:860px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;border-top:3px solid var(--blue);transition:.2s;}
+.stat-card.g{border-top-color:var(--green);}
+.stat-card.a{border-top-color:var(--amber);}
+.stat-card.p{border-top-color:var(--purple);}
+.stat-val{font-size:26px;font-weight:700;margin-bottom:2px;color:var(--text);}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── INPUTS ── */
+label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin:10px 0 4px;}
+input[type=text],input[type=date],input[type=password],input[type=email],input[type=number],textarea,select{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
+textarea{min-height:80px;resize:vertical;}
+select option{background:var(--bg3);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.2s;}
+.btn-p{background:var(--blue);color:#fff;}.btn-p:hover{background:#1d4ed8;transform:translateY(-1px);}
+.btn-o{background:transparent;color:var(--blue-bright);border:1px solid var(--blue-mid);}.btn-o:hover{background:var(--blue-lt);}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border);}.btn-g:hover{background:var(--bg3);}
+.btn-d{background:var(--red-lt);color:var(--red);border:1px solid rgba(239,68,68,.3);}.btn-d:hover{background:rgba(239,68,68,.25);}
+.btn-full{width:100%;justify-content:center;margin-top:8px;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-sbb{background:#eb0000;color:white;}.btn-sbb:hover{background:#c00;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.b-blue{background:var(--blue-lt);color:var(--blue-bright);}
+.b-green{background:var(--green-lt);color:var(--green);}
+.b-amber{background:var(--amber-lt);color:var(--amber);}
+.b-red{background:var(--red-lt);color:var(--red);}
+.b-purple{background:var(--purple-lt);color:var(--purple);}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+th{background:var(--bg3);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-top:1px solid var(--border);vertical-align:middle;font-size:13px;color:var(--text2);}
+tr:first-child td{border-top:none;}
+tr:hover td{background:var(--bg3);}
+
+/* ── LOC ITEM ── */
+.loc-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;}
+.loc-item:last-child{border-bottom:none;}
+.loc-name{font-weight:600;font-size:13px;margin-bottom:2px;color:var(--text);}
+.loc-addr{font-size:12px;color:var(--muted);margin-bottom:4px;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#fff;font-weight:600;font-size:13px;padding:10px 22px;border-radius:30px;z-index:9999;transition:transform .3s ease;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── BANNERS ── */
+.upgrade-banner{background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.upgrade-banner p{font-size:13px;color:var(--blue-bright);font-weight:500;}
+
+/* ── LANG TABS ── */
+.lang-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.lang-tab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--bg3);transition:.15s;}
+.lang-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
+
+/* ── OVERLAY + MOBILE ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
+@media(max-width:700px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:block;}
+  .overlay.show{display:block;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+
+/* ══ GAST VIEW ══ */
+#guestApp{max-width:600px;margin:0 auto;padding:20px;min-height:100vh;position:relative;z-index:1;}
+.g-topbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.g-hotel{font-size:20px;font-weight:700;color:var(--text);}
+.g-date{font-size:12px;color:var(--muted);margin-top:2px;}
+.wifi-card{background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.wifi-pwd{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--blue-bright);}
+.g-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+.g-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.g-card-title{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.report-text{font-size:15px;line-height:1.8;color:var(--text);white-space:pre-wrap;}
+
+/* Weather bar */
+.weather-bar{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;}
+.weather-temp{font-size:28px;font-weight:800;color:var(--text);}
+.weather-desc{font-size:13px;color:var(--text2);}
+.weather-detail{font-size:11px;color:var(--muted);}
+
+/* Restaurant cards */
+.restaurant-grid{display:grid;gap:10px;margin-top:10px;}
+.resto-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
+.resto-icon{font-size:20px;flex-shrink:0;}
+.resto-name{font-weight:600;font-size:13px;color:var(--text);margin-bottom:2px;}
+.resto-type{font-size:11px;color:var(--muted);}
+.resto-dist{font-size:11px;color:var(--blue-bright);margin-left:auto;flex-shrink:0;}
+
+#map{height:220px;border-radius:10px;border:1px solid var(--border);margin-top:12px;}
+select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;}
+.g-footer{text-align:center;padding:16px 0 8px;font-size:11px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ══ AUTH ══ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🏨</div>
+      <h1>Swiss Concierge AI</h1>
+      <p>Anmelden oder Konto erstellen</p>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuth('login')" id="tab-login">Anmelden</div>
+      <div class="auth-tab" onclick="switchAuth('register')" id="tab-register">Registrieren</div>
+    </div>
+    <div id="auth-login">
+      <label class="auth-label">E-Mail</label>
+      <input type="email" id="loginEmail" class="auth-input" placeholder="hotel@beispiel.ch">
+      <label class="auth-label">Passwort</label>
+      <input type="password" id="loginPw" class="auth-input" placeholder="••••••••">
+      <button class="auth-btn" onclick="doLogin()">Anmelden</button>
+    </div>
+    <div id="auth-register" style="display:none">
+      <label class="auth-label">E-Mail</label>
+      <input type="email" id="regEmail" class="auth-input" placeholder="hotel@beispiel.ch">
+      <label class="auth-label">Passwort (min. 6 Zeichen)</label>
+      <input type="password" id="regPw" class="auth-input" placeholder="••••••••">
+      <button class="auth-btn" onclick="doRegister()">Konto erstellen – 10 Gratis-Credits</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-link"><a href="index.html">Zurueck zur Startseite</a></div>
+  </div>
+</div>
+
+<!-- ══ PAYWALL ══ -->
+<div id="paywallScreen" style="display:none">
+  <div class="paywall-box">
+    <div class="paywall-header">
+      <div style="font-size:36px;margin-bottom:12px">🔒</div>
+      <h2>Plan waehlen oder Credits kaufen</h2>
+      <p>Dein Konto ist aktiv – waehle einen Plan oder kaufe Credits.</p>
+    </div>
+    <div class="plan-cards">
+      <div class="plan-card" onclick="goToStripe('starter')">
+        <div class="plan-card-name">Starter</div>
+        <div class="plan-card-price">CHF 29<span>/Mt</span></div>
+        <div class="plan-card-desc">1 Standort · 30 Reports</div>
+      </div>
+      <div class="plan-card popular" onclick="goToStripe('pro')">
+        <div class="pop-badge">BELIEBT</div>
+        <div class="plan-card-name">Pro</div>
+        <div class="plan-card-price">CHF 79<span>/Mt</span></div>
+        <div class="plan-card-desc">5 Standorte · 200 Reports</div>
+      </div>
+      <div class="plan-card" onclick="goToStripe('enterprise')">
+        <div class="plan-card-name">Enterprise</div>
+        <div class="plan-card-price">CHF 199<span>/Mt</span></div>
+        <div class="plan-card-desc">Unlimitiert</div>
+      </div>
+    </div>
+    <div class="paywall-divider">oder Pay-on-Demand</div>
+    <div class="credit-row">
+      <div class="credit-btn" onclick="goToStripe('credits50')">
+        <div class="credit-btn-val">50 Credits</div>
+        <div class="credit-btn-price">CHF 9</div>
+      </div>
+      <div class="credit-btn" onclick="goToStripe('credits200')">
+        <div class="credit-btn-val">200 Credits</div>
+        <div class="credit-btn-price">CHF 29</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px">Kreditkarte · Twint · SEPA · via Stripe</p>
+    <div style="background:var(--amber-lt);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;text-align:center">
+      <p style="font-size:13px;color:var(--amber);font-weight:500">Nach der Zahlung: Seite neu laden – Plan wird aktiviert.</p>
+    </div>
+    <div class="paywall-logout">Falsches Konto? <a onclick="doLogout()">Abmelden</a></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div id="adminApp" style="display:none">
+<div id="adminLayout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏨</div>
+      <div><div class="sb-logo-name">Concierge AI</div><div class="sb-logo-sub">Swiss Hotels</div></div>
+    </div>
+    <div class="plan-pill trial" id="planPill">– Plan –</div>
+    <div class="credits-bar" id="creditsBar" style="display:none">
+      <span id="creditsLabel">– Credits</span>
+      <div class="credits-progress"><div class="credits-progress-inner" id="creditsProgressInner" style="width:100%"></div></div>
+    </div>
+    <nav class="sb-nav" style="margin-top:8px">
+      <div class="nav-section">Verwaltung</div>
+      <button class="nav-btn active" onclick="switchPage('standorte')" id="nav-standorte"><span class="ni">🏨</span> Standorte</button>
+      <button class="nav-btn" onclick="switchPage('reports')" id="nav-reports"><span class="ni">📄</span> Reports</button>
+      <button class="nav-btn" onclick="switchPage('erstellen')" id="nav-erstellen"><span class="ni">✍️</span> Erstellen</button>
+      <div class="nav-section" style="margin-top:10px">Admin</div>
+      <button class="nav-btn" onclick="switchPage('kunden')" id="nav-kunden" style="display:none"><span class="ni">👥</span> Kunden</button>
+      <div class="nav-section" style="margin-top:6px">Konto</div>
+      <button class="nav-btn" onclick="switchPage('billing')" id="nav-billing"><span class="ni">💳</span> Abonnement</button>
+      <button class="nav-btn" onclick="switchPage('settings')" id="nav-settings"><span class="ni">⚙️</span> Einstellungen</button>
+    </nav>
+    <div class="sb-foot"><div id="sbUserEmail" style="word-break:break-all;margin-bottom:2px"></div>ZeroGen · Swiss Concierge AI</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <span class="topbar-title" id="pageTitle">Standorte</span>
+      </div>
+      <div class="topbar-right">
+        <span id="topbarDate" style="font-size:12px;color:var(--muted)"></span>
+        <button class="btn btn-g btn-sm" onclick="doLogout()">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="upgrade-banner" id="upgradeBanner" style="display:none">
+        <p>Credits fast aufgebraucht.</p>
+        <button class="btn btn-p btn-sm" onclick="switchPage('billing')">Credits kaufen</button>
+      </div>
+
+      <!-- STANDORTE -->
+      <div id="page-standorte">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-val" id="statTotal">–</div><div class="stat-lbl">Standorte</div></div>
+          <div class="stat-card g"><div class="stat-val" id="statRep">–</div><div class="stat-lbl">Report heute</div></div>
+          <div class="stat-card a"><div class="stat-val" id="statMiss">–</div><div class="stat-lbl">Fehlend</div></div>
+          <div class="stat-card p"><div class="stat-val" id="statCredits">–</div><div class="stat-lbl">Credits</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Neuer Standort</div>
+            <span id="locLimitBadge" class="badge b-blue" style="display:none"></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Name</label><input type="text" id="locName" placeholder="Hotel Alpenblick"></div>
+            <div><label>WLAN-Passwort</label><input type="text" id="locWifi" placeholder="GastWLAN123"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Check-in</label><input type="text" id="locCheckin" placeholder="15:00"></div>
+            <div><label>Check-out</label><input type="text" id="locCheckout" placeholder="11:00"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>Typ</label>
+              <select id="locType">
+                <option value="hotel">Hotel</option>
+                <option value="airbnb">Airbnb / Ferienwohnung</option>
+                <option value="bnb">B&B / Pension</option>
+                <option value="hostel">Hostel</option>
+              </select>
+            </div>
+            <div>
+              <label>Zielgruppe</label>
+              <select id="locGuest">
+                <option value="alle">Alle Gaeste</option>
+                <option value="familie">Familien mit Kindern</option>
+                <option value="kultur">Kulturtouristen</option>
+                <option value="business">Business</option>
+                <option value="paerchen">Paerchen / Romantik</option>
+                <option value="senioren">Senioren</option>
+              </select>
+            </div>
+          </div>
+          <label>Adresse</label>
+          <input type="text" id="locAddr" placeholder="Hauptstrasse 1, 8001 Zuerich">
+          <button class="btn btn-p btn-full" onclick="addLocation()">Speichern & Koordinaten finden</button>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Aktive Standorte</div>
+            <button class="btn btn-g btn-sm" onclick="loadLocations()">Aktualisieren</button>
+          </div>
+          <div id="locationList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="page-reports" style="display:none">
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Tagesreports – Heute</div>
+            <button class="btn btn-g btn-sm" onclick="loadReports()">Aktualisieren</button>
+          </div>
+          <div id="reportList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+        </div>
+      </div>
+
+      <!-- ERSTELLEN -->
+      <div id="page-erstellen" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Report erstellen</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Standort</label><select id="manualLoc"><option>Lade...</option></select></div>
+            <div><label>Datum</label><input type="date" id="manualDate"></div>
+          </div>
+          <label>Sprachen generieren</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-de" checked> DE</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-en"> EN</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-fr"> FR</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-it"> IT</label>
+          </div>
+          <label>Inhalt (Deutsch)</label>
+          <textarea id="manualContent" rows="8" placeholder="Guten Morgen! Herzlich willkommen..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-o" onclick="generateReport()" style="flex:1">Groq generieren</button>
+            <button class="btn btn-p" onclick="saveManual()" style="flex:1">Speichern</button>
+          </div>
+          <div id="genProgress" style="margin-top:10px;font-size:12px;color:var(--muted);display:none"></div>
+        </div>
+      </div>
+
+      <!-- BILLING -->
+      <div id="page-billing" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Aktueller Plan</div></div>
+          <div id="billingInfo" style="font-size:14px;color:var(--text2);margin-bottom:16px">Lade...</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a id="portalLink" href="#" class="btn btn-p" target="_blank">Abo verwalten (Stripe)</a>
+            <button class="btn btn-o" onclick="goToStripe('pro')">Upgraden</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Report-Credits kaufen</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;background:var(--bg3)">
+              <div style="font-size:22px;font-weight:800">50 Credits</div>
+              <div style="color:var(--muted);font-size:12px;margin:4px 0 12px">CHF 0.18 / Report</div>
+              <div style="font-size:20px;font-weight:700;color:var(--blue-bright);margin-bottom:12px">CHF 9</div>
+              <button class="btn btn-o btn-full" style="margin-top:0" onclick="goToStripe('credits50')">Kaufen</button>
+            </div>
+            <div style="border:1px solid var(--blue);border-radius:10px;padding:16px;text-align:center;background:var(--blue-lt)">
+              <div style="font-size:22px;font-weight:800">200 Credits</div>
+              <div style="color:var(--muted);font-size:12px;margin:4px 0 12px">CHF 0.14 / Report</div>
+              <div style="font-size:20px;font-weight:700;color:var(--blue-bright);margin-bottom:12px">CHF 29</div>
+              <button class="btn btn-p btn-full" style="margin-top:0" onclick="goToStripe('credits200')">Kaufen</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Credits manuell gutschreiben</div></div>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="creditAddAmount" placeholder="Anzahl Credits" style="flex:1">
+            <button class="btn btn-p" onclick="addCreditsManual()">Gutschreiben</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KUNDEN -->
+      <div id="page-kunden" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Kunde aktivieren / Plan setzen</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
+            Trage die Email des Kunden ein (muss sich vorher registriert haben) und setze den Plan nach der Stripe-Zahlung.
+          </p>
+          <label>Email des Kunden</label>
+          <input type="email" id="customerEmail" placeholder="kunde@beispiel.ch">
+          <label>Plan</label>
+          <select id="customerPlan">
+            <option value="starter">Starter – CHF 29/Mt (1 Standort, 30 Credits)</option>
+            <option value="pro">Pro – CHF 79/Mt (5 Standorte, 200 Credits)</option>
+            <option value="enterprise">Enterprise – CHF 199/Mt (unbegrenzt)</option>
+            <option value="trial">Trial (10 Credits)</option>
+          </select>
+          <label>Credits manuell setzen</label>
+          <input type="number" id="customerCredits" placeholder="z.B. 30" value="30">
+          <button class="btn btn-p btn-full" onclick="activateCustomer()">Plan aktivieren</button>
+          <div id="customerStatus" style="margin-top:12px;font-size:13px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Alle Kunden</div>
+            <button class="btn btn-g btn-sm" onclick="loadCustomers()">Aktualisieren</button>
+          </div>
+          <div id="customerList"><div style="color:var(--muted);font-size:13px">Klicke auf Aktualisieren...</div></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="page-settings" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Groq API Key</div></div>
+          <label>API Key</label>
+          <input type="password" id="groqKeyInput" placeholder="gsk_...">
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-p" onclick="saveGroqKey()">Speichern</button>
+            <button class="btn btn-d" onclick="deleteGroqKey()">Loeschen</button>
+          </div>
+          <div id="groqStatus" style="margin-top:12px;font-size:13px"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Automatischer Tages-Job</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">cron-job.org ruft taeglich um 06:00 die Trigger-URL auf und generiert alle Reports automatisch.</p>
+          <label>Job-Token (geheim halten)</label>
+          <div style="display:flex;gap:8px;margin-bottom:4px">
+            <input type="text" id="jobTokenInput" placeholder="z.B. meinToken2025" style="flex:1;font-family:'DM Mono',monospace">
+            <button class="btn btn-p" onclick="saveJobToken()">Speichern</button>
+          </div>
+          <div id="jobTokenStatus" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+          <label>Trigger-URL (fuer cron-job.org)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="triggerUrlDisplay" readonly style="flex:1;font-size:12px;font-family:'DM Mono',monospace">
+            <button class="btn btn-o btn-sm" onclick="copyTriggerUrl()">Kopieren</button>
+          </div>
+          <button class="btn btn-o btn-full" style="margin-top:12px" onclick="runJobNow()">Jetzt manuell ausfuehren</button>
+          <div id="jobLog" style="margin-top:12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:none;max-height:200px;overflow-y:auto;line-height:1.8;color:var(--text2)"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">App Info</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <tr><td style="color:var(--muted);width:140px">Version</td><td>2.0.0</td></tr>
+              <tr><td style="color:var(--muted)">User ID</td><td id="settingsUserId" style="font-size:11px;font-family:'DM Mono',monospace;word-break:break-all">–</td></tr>
+              <tr><td style="color:var(--muted)">Plan</td><td id="settingsPlan">–</td></tr>
+              <tr><td style="color:var(--muted)">Stack</td><td>Firebase · Groq · Stripe · OSM · Open-Meteo</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ GAST VIEW ══ -->
+<div id="guestApp" style="display:none">
+  <div class="g-topbar">
+    <div>
+      <div class="g-hotel" id="gHotelName">Willkommen</div>
+      <div class="g-date" id="gDate"></div>
+    </div>
+    <div style="font-size:28px">🇨🇭</div>
+  </div>
+
+  <!-- Wetter Bar -->
+  <div id="weatherBar" class="weather-bar" style="display:none">
+    <div style="font-size:28px" id="weatherIcon">☀️</div>
+    <div style="flex:1">
+      <div class="weather-temp" id="weatherTemp"></div>
+      <div class="weather-desc" id="weatherDesc"></div>
+      <div class="weather-detail" id="weatherDetail"></div>
+    </div>
+  </div>
+
+  <div id="wifiCard" class="wifi-card" style="display:none">
+    <span style="font-size:26px">📶</span>
+    <div style="flex:1">
+      <div style="font-size:10px;color:var(--blue-bright);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">WLAN Passwort</div>
+      <div class="wifi-pwd" id="gWifi"></div>
+    </div>
+    <button class="btn btn-o btn-sm" onclick="copyWifi()">Kopieren</button>
+  </div>
+
+  <!-- Check-in Info -->
+  <div id="checkinCard" class="g-card" style="display:none">
+    <div class="g-card-hd"><div class="g-card-title">Check-in / Check-out</div></div>
+    <div style="display:flex;gap:20px">
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">CHECK-IN</div><div style="font-size:18px;font-weight:700;color:var(--green)" id="gCheckin">–</div></div>
+      <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">CHECK-OUT</div><div style="font-size:18px;font-weight:700;color:var(--amber)" id="gCheckout">–</div></div>
+    </div>
+  </div>
+
+  <div class="g-card">
+    <div class="g-card-hd">
+      <div class="g-card-title">Tages-Briefing</div>
+      <select id="guestLang" onchange="switchLang()">
+        <option value="de">DE</option>
+        <option value="en">EN</option>
+        <option value="fr">FR</option>
+        <option value="it">IT</option>
+      </select>
+    </div>
+    <div id="gContent" class="report-text">Lade Briefing...</div>
+  </div>
+
+  <!-- Restaurants -->
+  <div class="g-card" id="restoCard" style="display:none">
+    <div class="g-card-hd"><div class="g-card-title">Restaurants in der Naehe</div></div>
+    <div id="restoList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+  </div>
+
+  <div class="g-card">
+    <div class="g-card-hd">
+      <div class="g-card-title">Karte & OeV</div>
+      <button class="btn btn-sbb btn-sm" onclick="openSBB()">SBB Fahrplan</button>
+    </div>
+    <div id="map"></div>
+  </div>
+  <div class="g-footer">Swiss Concierge AI · Powered by ZeroGen</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
