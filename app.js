@@ -913,22 +913,236 @@ async function loadGuestData(id) {
     if (!planSnap.empty) {
       const plans = planSnap.docs.sort((a,b)=>(b.data().createdAt?.seconds||0)-(a.data().createdAt?.seconds||0));
       const plan = plans[0].data();
-      const planCard = document.getElementById('guestPlanCard');
-      const planCont = document.getElementById('guestPlanContent');
-      if (planCard && planCont && plan.content) {
-        planCard.style.display = 'block';
-        planCont.textContent = plan.content;
-        planCont.dataset.locName  = loc.name;
-        planCont.dataset.checkin  = plan.checkin  || '';
-        planCont.dataset.checkout = plan.checkout || '';
+      if (plan.content) {
+        showGuestPlan(plan.content, loc);
       }
+    } else {
+      // Kein gespeicherter Plan - Anfrage-Button anzeigen
+      const reqCard = document.getElementById('guestPlanRequestCard');
+      if(reqCard) reqCard.style.display = 'block';
     }
-  } catch(e) { console.log('No plan:', e); }
+  } catch(e) {
+    console.log('No plan:', e);
+    const reqCard = document.getElementById('guestPlanRequestCard');
+    if(reqCard) reqCard.style.display = 'block';
+  }
 }
+
+// ── PLAN RENDERER – strukturiertes HTML mit Links ──
+function renderPlanHTML(planText, lat, lon, address) {
+  // Versuche strukturierten Plan zu parsen (Format: Tag 1: ... - Vormittag: ...)
+  const container = document.createElement('div');
+
+  const lines = planText.split('\n');
+  let currentDay = null;
+  let currentSlots = [];
+
+  const slotIcons = {
+    'vormittag':'🌅', 'morgen':'🌅', 'morning':'🌅',
+    'mittag':'🍽️', 'lunch':'🍽️', 'mittagessen':'🍽️',
+    'nachmittag':'☀️', 'afternoon':'☀️', 'nachmittag':'☀️',
+    'abend':'🌆', 'abendessen':'🌆', 'evening':'🌆', 'dinner':'🌆',
+    'nacht':'🌙', 'night':'🌙'
+  };
+
+  function flushDay() {
+    if (!currentDay && currentSlots.length === 0) return;
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'plan-day';
+    if (currentDay) {
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'plan-day-title';
+      titleDiv.innerHTML = '📅 ' + currentDay;
+      dayDiv.appendChild(titleDiv);
+    }
+    currentSlots.forEach(slot => {
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'plan-slot';
+
+      // Icon
+      const iconKey = Object.keys(slotIcons).find(k => slot.time.toLowerCase().includes(k));
+      const icon = slotIcons[iconKey] || '📍';
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'plan-slot-icon';
+      iconDiv.textContent = icon;
+      slotDiv.appendChild(iconDiv);
+
+      // Zeit-Label
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'plan-slot-time';
+      timeDiv.textContent = slot.time;
+      slotDiv.appendChild(timeDiv);
+
+      // Content
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'plan-slot-content';
+
+      // Ersten Teil als Name, Rest als Beschreibung
+      const parts = slot.text.split(':');
+      const name = parts[0]?.trim() || slot.text;
+      const desc = parts.slice(1).join(':').trim();
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'plan-slot-name';
+      nameDiv.textContent = name;
+      contentDiv.appendChild(nameDiv);
+
+      if (desc) {
+        const descDiv = document.createElement('div');
+        descDiv.className = 'plan-slot-desc';
+        descDiv.textContent = desc;
+        contentDiv.appendChild(descDiv);
+      }
+
+      // Google Maps Link für diesen Ort
+      const searchTerm = name + ' ' + (address || '');
+      const mapsUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(searchTerm);
+      const link = document.createElement('a');
+      link.className = 'plan-slot-link';
+      link.href = mapsUrl;
+      link.target = '_blank';
+      link.innerHTML = '🗺️ Maps';
+      contentDiv.appendChild(link);
+
+      slotDiv.appendChild(contentDiv);
+      dayDiv.appendChild(slotDiv);
+    });
+    container.appendChild(dayDiv);
+    currentDay = null;
+    currentSlots = [];
+  }
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Tag-Überschrift erkennen
+    const dayMatch = trimmed.match(/^(Tag\s*\d+|Day\s*\d+|Jour\s*\d+|Giorno\s*\d+)[:\s]*(.*)/i);
+    if (dayMatch) {
+      flushDay();
+      currentDay = trimmed;
+      return;
+    }
+
+    // Slot erkennen: - Vormittag: ..., • Mittag: ...
+    const slotMatch = trimmed.match(/^[-•*]\s*(\w+(?:\s+\w+)?)\s*[:–-]\s*(.*)/);
+    if (slotMatch) {
+      currentSlots.push({ time: slotMatch[1], text: slotMatch[2] });
+      return;
+    }
+
+    // Sonstige Zeile → als freier Text
+    if (currentSlots.length > 0) {
+      currentSlots[currentSlots.length-1].text += ' ' + trimmed;
+    } else if (trimmed.length > 3) {
+      currentSlots.push({ time: '', text: trimmed });
+    }
+  });
+  flushDay();
+
+  // Fallback: wenn Parser nichts gefunden hat → plain text
+  if (!container.children.length) {
+    container.style.cssText = 'font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap';
+    container.textContent = planText;
+  }
+  return container;
+}
+
+
+// ── GAST FORDERT PLAN AN ──
+async function requestGuestPlan() {
+  const key = localStorage.getItem('concierge_groq_key') || '';
+  // Groq key aus dem Admin wurde möglicherweise nicht gesetzt auf Gast-Gerät
+  // Wir nutzen den gespeicherten Key falls vorhanden, sonst Hinweis
+  const btn = document.getElementById('requestPlanBtn');
+  if(btn){ btn.textContent = 'Wird generiert...'; btn.disabled = true; }
+
+  const locId = window._guestLocId;
+  if (!locId) return;
+
+  try {
+    const locDoc = await db.collection('locations').doc(locId).get();
+    const loc    = locDoc.data();
+
+    // Aufenthaltsdaten aus Report (falls Admin gesetzt hat)
+    const arr = guestReports?.guestArrival  || '';
+    const dep = guestReports?.guestDeparture || '';
+    const gName = guestReports?.guestName || '';
+    const nights = (arr && dep) ? Math.max(1,Math.round((new Date(dep)-new Date(arr))/(1000*60*60*24))) : 2;
+    const days   = nights + 1;
+    const lang   = document.getElementById('guestLang')?.value || 'de';
+    const langNames = {de:'Deutsch',en:'Englisch',fr:'Franzoesisch',it:'Italienisch'};
+
+    const w = await fetchWeather(loc.lat, loc.lon);
+    const wetterInfo = w.ok ? 'Wetter: '+w.wetter+', '+w.tempAkt+'C. '+w.aktivitaeten+'.' : '';
+
+    const prompt =
+      'Erstelle einen strukturierten Aufenthaltsplan in "'+( langNames[lang]||'Deutsch')+'" fuer '+(gName?gName+' ':'')+'in '+loc.name+', '+loc.address+'.' +
+      '\nAufenthalt: '+days+' Tag(e), '+nights+' Nacht/Naechte.'+(arr?' Anreise: '+arr:'')+( dep?' Abreise: '+dep:'')+
+      '\n'+wetterInfo+
+      '\n\nFormat STRIKT einhalten:' +
+      '\nTag 1: [Datum oder Beschreibung]' +
+      '\n- Vormittag: [Aktivitaet: kurze Beschreibung]' +
+      '\n- Mittagessen: [Restaurant oder Ort: kurze Beschreibung]' +
+      '\n- Nachmittag: [Aktivitaet: kurze Beschreibung]' +
+      '\n- Abendessen: [Restaurant: kurze Beschreibung]' +
+      '\nTag 2: ...' +
+      '\n\nNenne konkrete Ortsnamen und Restaurants aus der Region '+loc.address+'. SBB-Hinweis einbauen. Max 350 Woerter.';
+
+    // Plan direkt via Groq generieren - Key vom Admin-Geraet noetig
+    // Wir laden den Key aus Firebase (gespeichert im Report)
+    const repSnap = await db.collection('reports').where('locationId','==',locId).where('date','==',today()).get();
+    const groqKey = repSnap.empty ? '' : (repSnap.docs[0].data().groqKey || '');
+
+    if (!groqKey) {
+      // Kein Key verfuegbar - gespeicherten Plan aus stay_plans laden oder Hinweis
+      const planSnap = await db.collection('stay_plans').where('locationId','==',locId).get();
+      if (!planSnap.empty) {
+        const plan = planSnap.docs.sort((a,b)=>(b.data().createdAt?.seconds||0)-(a.data().createdAt?.seconds||0))[0].data();
+        showGuestPlan(plan.content, loc);
+      } else {
+        document.getElementById('guestPlanRequestCard').style.display = 'none';
+        const planCard = document.getElementById('guestPlanCard');
+        planCard.style.display = 'block';
+        document.getElementById('guestPlanContent').innerHTML =
+          '<p style="color:var(--muted);font-size:13px">Der Aufenthaltsplan wird bald bereitgestellt. Bitte wenden Sie sich an die Rezeption.</p>';
+      }
+      return;
+    }
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    const d = await res.json();
+    if(d.error) throw new Error(d.error.message);
+    const planText = d.choices[0].message.content.trim();
+    showGuestPlan(planText, loc);
+
+  } catch(e) {
+    if(btn){ btn.textContent = 'Aufenthaltsplan generieren'; btn.disabled = false; }
+    toast('Fehler: '+e.message,'red');
+  }
+}
+
+function showGuestPlan(planText, loc) {
+  document.getElementById('guestPlanRequestCard').style.display = 'none';
+  const planCard = document.getElementById('guestPlanCard');
+  planCard.style.display = 'block';
+  const contentEl = document.getElementById('guestPlanContent');
+  contentEl.innerHTML = '';
+  const rendered = renderPlanHTML(planText, loc.lat, loc.lon, loc.address);
+  contentEl.appendChild(rendered);
+  // Für PDF speichern
+  contentEl.dataset.rawText = planText;
+  contentEl.dataset.locName = loc.name;
+}
+
 
 function downloadGuestPlanPDF() {
   const el      = document.getElementById('guestPlanContent');
-  const content = el?.textContent || '';
+  const content = el?.dataset.rawText || el?.textContent || '';
   const locName = el?.dataset.locName || document.getElementById('gHotelName')?.textContent || 'Unterkunft';
   const checkin = el?.dataset.checkin || '';
   const checkout= el?.dataset.checkout || '';
@@ -1103,13 +1317,24 @@ async function savePlan() {
 
   if (!locId || !content) { toast('Kein Plan vorhanden','red'); return; }
 
-  // Als eigene Collection speichern
+  // Groq Key mitspeichern damit Gast Plan anfordern kann
+  const groqKey = localStorage.getItem('concierge_groq_key') || '';
+
   await db.collection('stay_plans').add({
     locationId: locId,
-    checkin, checkout, lang, content,
+    checkin, checkout, lang, content, groqKey,
     userId: currentUser.uid,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
+
+  // Auch im Report speichern damit Gast direkt Zugriff hat
+  if (checkin) {
+    const repSnap = await db.collection('reports').where('locationId','==',locId).where('date','==',checkin).get();
+    if (!repSnap.empty) {
+      await repSnap.docs[0].ref.update({ groqKey });
+    }
+  }
+
   toast('Plan gespeichert!');
 }
 
