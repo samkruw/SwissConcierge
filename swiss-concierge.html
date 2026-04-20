@@ -1885,7 +1885,7 @@ async function requestGuestPlan() {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:600,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',max_tokens:500,messages:[{role:'user',content:prompt}]})
     });
     const d = await res.json();
     if(d.error) throw new Error(d.error.message);
@@ -2025,36 +2025,33 @@ async function generateStayPlan() {
   const langNames = {de:'Deutsch',en:'Englisch',fr:'Franzoesisch',it:'Italienisch'};
   const langName  = langNames[lang] || 'Deutsch';
 
-  prog.textContent = 'Generiere Aufenthaltsplan...';
+  prog.textContent = 'Generiere Plan...';
 
+  // Kompakter Prompt - max 2 Tage detail, Rest kuerzer
+  const maxDays = Math.min(days, 5); // Max 5 Tage im Detail
   const prompt =
-    'Erstelle einen detaillierten Aufenthaltsplan in der Sprache "'+langName+'" fuer einen Gaeste-Aufenthalt.' +
-    '\n\nStandort: '+loc.name+' in '+loc.address+
-    '\nUnterkunftstyp: '+(loc.locType||'hotel')+
-    '\nGaeste-Profil: '+(loc.guestProfile||'alle')+
-    '\nAufenthalt: '+days+' Tag(e), '+nights+' Nacht/Naechte' +
-    '\nCheck-in: '+checkin+' um '+checkinTime+' Uhr' +
-    (checkout ? '\nCheck-out: '+checkout+' um '+checkoutTime+' Uhr' : '') +
-    '\nInteressen: '+interests.join(', ') +
-    (notes ? '\nHinweise: '+notes : '') +
-    '\n'+wetterInfo +
-    '\n\nErstelle einen strukturierten Tagesplan fuer jeden Tag. Fuer jeden Tag:' +
-    '\n- Vormittag (Aktivitaet/Ausflug mit konkreter Empfehlung)' +
-    '\n- Mittagessen (Restaurantempfehlung)' +
-    '\n- Nachmittag (Aktivitaet/Shopping/Sehenswuerdigkeit)' +
-    '\n- Abend (Restaurant oder Abendprogramm)' +
-    '\n\nTag 1 beginnt nach Check-in um '+checkinTime+' Uhr.' +
-    (checkout ? '\nLetzter Tag endet mit Check-out um '+checkoutTime+' Uhr.' : '') +
-    '\nNenne spezifische lokale Orte und Restaurants fuer '+loc.address+'.' +
-    '\nSBB-Hinweis fuer Ausfluge einbauen. Max 400 Woerter, klar strukturiert, praktischer Ton.';
+    'Aufenthaltsplan in "'+langName+'" fuer '+loc.name+', '+loc.address+'.' +
+    ' '+nights+' Naechte, Check-in '+checkinTime+', Check-out '+checkoutTime+'.' +
+    (interests.length ? ' Interessen: '+interests.join(', ')+'.' : '') +
+    (notes ? ' Hinweis: '+notes+'.' : '') +
+    ' '+wetterInfo +
+    '\n\nFormat (EXAKT einhalten):' +
+    '\nTag 1: [Datum/Beschreibung]' +
+    '\n- Vormittag: [Ort/Aktivitaet]: [1 Satz]' +
+    '\n- Mittagessen: [Restaurant]: [1 Satz]' +
+    '\n- Nachmittag: [Ort/Aktivitaet]: [1 Satz]' +
+    '\n- Abendessen: [Restaurant]: [1 Satz]' +
+    '\nTag 2: ...' +
+    (maxDays < days ? '\n(weitere '+( days-maxDays)+' Tag(e) analog)' : '') +
+    '\n\nNur reale Orte aus '+loc.address+'. SBB erwaehnen. Max 300 Woerter.';
 
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer '+key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 600,
+        model: 'llama-3.1-8b-instant', // Schnelles Modell fuer Plan
+        max_tokens: 500,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -2071,9 +2068,9 @@ async function generateStayPlan() {
     document.getElementById('planResult').dataset.checkin  = checkin;
     document.getElementById('planResult').dataset.checkout = checkout;
     document.getElementById('planResult').dataset.lang     = lang;
-    prog.textContent = 'Plan fertig!';
-    setTimeout(() => { prog.style.display='none'; }, 2000);
-    toast('Aufenthaltsplan generiert!');
+    prog.textContent = 'Fertig!';
+    setTimeout(() => { prog.style.display='none'; }, 1500);
+    toast('Plan generiert!');
 
   } catch(e) {
     prog.textContent = 'Fehler: '+e.message;
