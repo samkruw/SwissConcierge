@@ -943,13 +943,22 @@ async function fetchWeather(lat, lon) {
 
 // ── OSM POIs via Overpass ──
 async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
-  const r = 1200;
-  const query = '[out:json][timeout:20];(' +
-    'node["amenity"~"restaurant|cafe|bar|fast_food|pharmacy|cinema|theatre|bank|atm"](around:' + r + ',' + lat + ',' + lon + ');' +
-    'node["shop"~"supermarket|convenience|bakery|mall"](around:' + r + ',' + lat + ',' + lon + ');' +
-    'node["tourism"~"museum|gallery|viewpoint|zoo|attraction"](around:' + r + ',' + lat + ',' + lon + ');' +
+  const r = 3000;
+  const query = '[out:json][timeout:25];(' +
+    // Restaurants, Cafes, Bars
+    'node["amenity"~"restaurant|cafe|bar|fast_food|food_court|pharmacy|cinema|theatre|bank|atm"](around:' + r + ',' + lat + ',' + lon + ');' +
+    // Shops
+    'node["shop"~"supermarket|convenience|bakery|mall|department_store|kiosk|alcohol|butcher|deli|greengrocer"](around:' + r + ',' + lat + ',' + lon + ');' +
+    // Ways (Gebaeude wie Flughafen-Terminal, Einkaufszentrum)
+    'way["shop"~"supermarket|mall|department_store|convenience"](around:' + r + ',' + lat + ',' + lon + ');' +
+    'way["amenity"~"restaurant|cafe|bar|fast_food|food_court"](around:' + r + ',' + lat + ',' + lon + ');' +
+    // Flughafen spezifisch
+    'node["aeroway"="terminal"](around:' + r + ',' + lat + ',' + lon + ');' +
+    'way["aeroway"="terminal"](around:' + r + ',' + lat + ',' + lon + ');' +
+    // Tourism & Leisure
+    'node["tourism"~"museum|gallery|viewpoint|zoo|attraction|hotel"](around:' + r + ',' + lat + ',' + lon + ');' +
     'node["leisure"~"playground|swimming_pool|park|spa|fitness_centre|miniature_golf"](around:' + r + ',' + lat + ',' + lon + ');' +
-    ');out body 30;';
+    ');out center body 40;';
 
   const mirrors = [
     'https://overpass-api.de/api/interpreter',
@@ -970,7 +979,28 @@ async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
     } catch(e) { continue; }
   }
 
-  if (!d || !d.elements || !d.elements.length) return [];
+  if (!d || !d.elements || !d.elements.length) {
+    // Fallback: Google Maps Links fuer manuelle Suche
+    return [{
+      name: 'Restaurants in der Naehe suchen',
+      type: 'fallback', label: 'Google Maps',
+      icon: '🔍', dist: 0,
+      url: 'https://www.google.com/maps/search/restaurant/@' + lat + ',' + lon + ',15z',
+      website: 'https://www.google.com/maps/search/restaurant/@' + lat + ',' + lon + ',15z'
+    }, {
+      name: 'Supermarkt / Einkaufen',
+      type: 'fallback', label: 'Google Maps',
+      icon: '🛒', dist: 0,
+      url: 'https://www.google.com/maps/search/supermarkt/@' + lat + ',' + lon + ',15z',
+      website: 'https://www.google.com/maps/search/supermarkt/@' + lat + ',' + lon + ',15z'
+    }, {
+      name: 'Sehenswuerdigkeiten & Aktivitaeten',
+      type: 'fallback', label: 'Google Maps',
+      icon: '🗺️', dist: 0,
+      url: 'https://www.google.com/maps/search/sehenswuerdigkeiten/@' + lat + ',' + lon + ',14z',
+      website: 'https://www.google.com/maps/search/sehenswuerdigkeiten/@' + lat + ',' + lon + ',14z'
+    }];
+  }
   try {
     const query = '[out:json][timeout:15];('+amenityQuery+');out body 20;';
     const res = await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
@@ -981,7 +1011,7 @@ async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
       museum:'Museum', cinema:'Kino', pharmacy:'Apotheke', library:'Bibliothek',
       supermarket:'Supermarkt', bakery:'Baeckerei', convenience:'Lebensmittel',
       coworking_space:'Coworking', bank:'Bank', atm:'Bankomat', doctors:'Arzt',
-      zoo:'Zoo', playground:'Spielplatz', swimming_pool:'Schwimmbad',
+      zoo:'Zoo', playground:'Spielplatz', swimming_pool:'Schwimmbad', terminal:'Flughafen-Terminal',
       miniature_golf:'Minigolf', spa:'Spa', park:'Park', gallery:'Galerie',
       viewpoint:'Aussichtspunkt'
     };
@@ -991,20 +1021,23 @@ async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
       museum:'🏛️', cinema:'🎬', pharmacy:'💊', library:'📚',
       supermarket:'🛒', bakery:'🥐', convenience:'🏪',
       coworking_space:'💻', bank:'🏦', atm:'💳', doctors:'🏥',
-      zoo:'🦁', playground:'🛝', swimming_pool:'🏊', miniature_golf:'⛳',
+      zoo:'🦁', playground:'🛝', swimming_pool:'🏊', miniature_golf:'⛳', terminal:'✈️',
       spa:'🧖', park:'🌳', gallery:'🖼️', viewpoint:'🔭'
     };
 
     return (d.elements||[])
       .filter(e => e.tags && e.tags.name)
       .map(e => {
-        const amenity = e.tags.amenity || e.tags.tourism || e.tags.leisure || e.tags.shop || e.tags.historic || 'place';
+        // Ways haben center statt direkte lat/lon
+        const eLat = e.lat || (e.center && e.center.lat) || lat;
+        const eLon = e.lon || (e.center && e.center.lon) || lon;
+        const amenity = e.tags.amenity || e.tags.tourism || e.tags.leisure || e.tags.shop || e.tags.aeroway || e.tags.historic || 'place';
         const dist = Math.round(Math.sqrt(
-          Math.pow((e.lat-lat)*111000,2) +
-          Math.pow((e.lon-lon)*111000*Math.cos(lat*Math.PI/180),2)
+          Math.pow((eLat-lat)*111000,2) +
+          Math.pow((eLon-lon)*111000*Math.cos(lat*Math.PI/180),2)
         ));
         const mapsUrl = 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(e.tags.name)+'+'+encodeURIComponent(e.tags['addr:city']||'')+'&query_place_id=';
-        const osmUrl  = 'https://www.openstreetmap.org/?mlat='+e.lat+'&mlon='+e.lon+'&zoom=17';
+        const osmUrl  = 'https://www.openstreetmap.org/?mlat='+eLat+'&mlon='+eLon+'&zoom=17';
         return {
           name:    e.tags.name,
           type:    amenity,
@@ -1377,7 +1410,23 @@ async function loadGuestData(id) {
   const pois = await fetchOsmPOIs(loc.lat, loc.lon, locType, guestProfile);
   const restoEl = document.getElementById('restoList');
   if(!pois.length){
-    restoEl.innerHTML='<p style="color:var(--muted);font-size:13px">Keine Orte in der Naehe gefunden – Radius wird erhoehen...</p>';
+    // Zeige Google Maps Fallback Links
+    const fallbackWrap = document.createElement('div');
+    fallbackWrap.className = 'restaurant-grid';
+    [
+      {icon:'🍽️', label:'Restaurants suchen', url:'https://www.google.com/maps/search/restaurant/@'+loc.lat+','+loc.lon+',15z'},
+      {icon:'🛒', label:'Supermarkt suchen', url:'https://www.google.com/maps/search/supermarkt/@'+loc.lat+','+loc.lon+',15z'},
+      {icon:'🗺️', label:'Aktivitaeten suchen', url:'https://www.google.com/maps/search/aktivitaeten/@'+loc.lat+','+loc.lon+',14z'},
+    ].forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'resto-card';
+      card.style.cursor = 'pointer';
+      card.onclick = () => window.open(f.url, '_blank');
+      card.innerHTML = '<div class="resto-icon">'+f.icon+'</div><div style="flex:1"><div class="resto-name">'+f.label+'</div><div class="resto-type">Google Maps</div></div><div style="font-size:11px;color:var(--blue-bright)">Oeffnen →</div>';
+      fallbackWrap.appendChild(card);
+    });
+    restoEl.innerHTML = '';
+    restoEl.appendChild(fallbackWrap);
   } else {
     const wrap = document.createElement('div');
     wrap.className = 'restaurant-grid';
