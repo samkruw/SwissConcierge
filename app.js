@@ -917,14 +917,11 @@ async function loadGuestData(id) {
         showGuestPlan(plan.content, loc);
       }
     } else {
-      // Kein gespeicherter Plan - Anfrage-Button anzeigen
-      const reqCard = document.getElementById('guestPlanRequestCard');
-      if(reqCard) reqCard.style.display = 'block';
+      // Kein gespeicherter Plan - Button bleibt sichtbar im Report
+      console.log('No stay plan saved yet');
     }
   } catch(e) {
-    console.log('No plan:', e);
-    const reqCard = document.getElementById('guestPlanRequestCard');
-    if(reqCard) reqCard.style.display = 'block';
+    console.log('Plan load error:', e);
   }
 }
 
@@ -1049,6 +1046,34 @@ function renderPlanHTML(planText, lat, lon, address) {
 }
 
 
+function togglePlanRequest() {
+  const reqCard  = document.getElementById('guestPlanRequestCard');
+  const planCard = document.getElementById('guestPlanCard');
+  const btn      = document.getElementById('planToggleBtn');
+
+  // Wenn Plan schon sichtbar -> ausblenden
+  if (planCard && planCard.style.display !== 'none') {
+    planCard.style.display = 'none';
+    if(btn) btn.textContent = '📅 Aufenthaltsplan anfordern';
+    return;
+  }
+  // Wenn Request-Card sichtbar -> ausblenden
+  if (reqCard && reqCard.style.display !== 'none') {
+    reqCard.style.display = 'none';
+    if(btn) btn.textContent = '📅 Aufenthaltsplan anfordern';
+    return;
+  }
+  // Plan laden: gespeicherten anzeigen oder Anfrage-Card
+  if (planCard && document.getElementById('guestPlanContent')?.children.length > 0) {
+    planCard.style.display = 'block';
+    if(btn) btn.textContent = '✕ Aufenthaltsplan ausblenden';
+  } else if (reqCard) {
+    reqCard.style.display = 'block';
+    if(btn) btn.textContent = '✕ Schliessen';
+  }
+}
+
+
 // ── GAST FORDERT PLAN AN ──
 async function requestGuestPlan() {
   const key = localStorage.getItem('concierge_groq_key') || '';
@@ -1134,9 +1159,11 @@ function showGuestPlan(planText, loc) {
   contentEl.innerHTML = '';
   const rendered = renderPlanHTML(planText, loc.lat, loc.lon, loc.address);
   contentEl.appendChild(rendered);
-  // Für PDF speichern
   contentEl.dataset.rawText = planText;
   contentEl.dataset.locName = loc.name;
+  // Button-Text updaten
+  const btn = document.getElementById('planToggleBtn');
+  if(btn) btn.textContent = '✕ Aufenthaltsplan ausblenden';
 }
 
 
