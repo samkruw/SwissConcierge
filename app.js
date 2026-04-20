@@ -311,63 +311,34 @@ async function fetchWeather(lat, lon) {
 
 // ── OSM POIs via Overpass ──
 async function fetchOsmPOIs(lat, lon, locType, guestProfile) {
-  const r = 800;
+  const r = 1200;
+  const query = '[out:json][timeout:20];(' +
+    'node["amenity"~"restaurant|cafe|bar|fast_food|pharmacy|cinema|theatre|bank|atm"](around:' + r + ',' + lat + ',' + lon + ');' +
+    'node["shop"~"supermarket|convenience|bakery|mall"](around:' + r + ',' + lat + ',' + lon + ');' +
+    'node["tourism"~"museum|gallery|viewpoint|zoo|attraction"](around:' + r + ',' + lat + ',' + lon + ');' +
+    'node["leisure"~"playground|swimming_pool|park|spa|fitness_centre|miniature_golf"](around:' + r + ',' + lat + ',' + lon + ');' +
+    ');out body 30;';
 
-  // Query basierend auf Typ und Zielgruppe
-  let amenityQuery = '';
+  const mirrors = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+  ];
 
-  // Immer: Restaurants + Cafes
-  amenityQuery += 'node["amenity"="restaurant"](around:'+r+','+lat+','+lon+');';
-  amenityQuery += 'node["amenity"="cafe"](around:'+r+','+lat+','+lon+');';
-
-  // Airbnb: Supermarkt, Baecker, Apotheke
-  if (locType === 'airbnb' || locType === 'bnb') {
-    amenityQuery += 'node["shop"="supermarket"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["shop"="bakery"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["shop"="convenience"](around:'+r+','+lat+','+lon+');';
+  let d = null;
+  for (const mirror of mirrors) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(mirror + '?data=' + encodeURIComponent(query), { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      d = await res.json();
+      if (d && d.elements && d.elements.length > 0) break;
+    } catch(e) { continue; }
   }
 
-  // Familie: Spielplatz, Zoo, Kino, Schwimmbad
-  if (guestProfile === 'familie') {
-    amenityQuery += 'node["leisure"="playground"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="cinema"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["leisure"="swimming_pool"](around:1200,'+lat+','+lon+');';
-    amenityQuery += 'node["tourism"="zoo"](around:3000,'+lat+','+lon+');';
-    amenityQuery += 'node["leisure"="miniature_golf"](around:2000,'+lat+','+lon+');';
-  }
-
-  // Kultur: Museum, Theater, Galerie, Kirche
-  if (guestProfile === 'kultur') {
-    amenityQuery += 'node["tourism"="museum"](around:1500,'+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="theatre"](around:1500,'+lat+','+lon+');';
-    amenityQuery += 'node["tourism"="gallery"](around:1000,'+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="library"](around:800,'+lat+','+lon+');';
-    amenityQuery += 'node["historic"="monument"](around:1500,'+lat+','+lon+');';
-  }
-
-  // Paerchen: Bar, Spa, Aussichtspunkt
-  if (guestProfile === 'paerchen') {
-    amenityQuery += 'node["amenity"="bar"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["leisure"="spa"](around:2000,'+lat+','+lon+');';
-    amenityQuery += 'node["tourism"="viewpoint"](around:2000,'+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="cinema"](around:1500,'+lat+','+lon+');';
-  }
-
-  // Business: Coworking, Drucker, Bankomatstandort
-  if (guestProfile === 'business') {
-    amenityQuery += 'node["amenity"="coworking_space"](around:1000,'+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="bank"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="atm"](around:'+r+','+lat+','+lon+');';
-  }
-
-  // Senioren: Park, Apotheke, Arzt
-  if (guestProfile === 'senioren') {
-    amenityQuery += 'node["leisure"="park"](around:1000,'+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="pharmacy"](around:'+r+','+lat+','+lon+');';
-    amenityQuery += 'node["amenity"="doctors"](around:1000,'+lat+','+lon+');';
-  }
-
+  if (!d || !d.elements || !d.elements.length) return [];
   try {
     const query = '[out:json][timeout:15];('+amenityQuery+');out body 20;';
     const res = await fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query));
@@ -831,6 +802,152 @@ function initMap(lat, lon, name) {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(mapInstance);
   L.marker([lat, lon]).addTo(mapInstance).bindPopup(name).openPopup();
 }
+
+function downloadPDF() {
+  const hotelName  = document.getElementById('gHotelName').textContent || 'Concierge';
+  const date       = document.getElementById('gDate').textContent || new Date().toLocaleDateString('de-CH');
+  const reportText = document.getElementById('gContent').textContent || '';
+  const wifi       = document.getElementById('gWifi')?.textContent || '';
+  const checkin    = document.getElementById('gCheckin')?.textContent || '';
+  const checkout   = document.getElementById('gCheckout')?.textContent || '';
+  const lang       = document.getElementById('guestLang')?.value || 'de';
+
+  // Wetter
+  const weatherTemp = document.getElementById('weatherTemp')?.textContent || '';
+  const weatherDesc = document.getElementById('weatherDesc')?.textContent || '';
+  const weatherDetail = document.getElementById('weatherDetail')?.textContent || '';
+
+  // Restaurants / POIs sammeln
+  const poiCards = document.querySelectorAll('#restoList .resto-card');
+  const pois = [];
+  poiCards.forEach(card => {
+    const name = card.querySelector('.resto-name')?.textContent || '';
+    const type = card.querySelector('.resto-type')?.textContent || '';
+    const dist = card.querySelector('.resto-dist')?.textContent || '';
+    if (name) pois.push({ name, type, dist });
+  });
+
+  const langLabels = { de:'Deutsch', en:'English', fr:'Français', it:'Italiano', es:'Español', ja:'日本語', zh:'中文' };
+
+  // HTML fuer Print/PDF
+  const printHTML = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+<meta charset="UTF-8">
+<title>${hotelName} – Gäste-Briefing</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #1a1a2e; line-height: 1.6; }
+
+  .header { background: #2563eb; color: white; padding: 24px 28px; border-radius: 10px; margin-bottom: 20px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .header .date { font-size: 13px; opacity: 0.85; }
+  .header .powered { font-size: 10px; opacity: 0.6; margin-top: 8px; }
+
+  .section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
+  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #64748b; margin-bottom: 10px; }
+
+  .info-row { display: flex; gap: 24px; margin-bottom: 10px; }
+  .info-item label { font-size: 10px; color: #94a3b8; display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .5px; }
+  .info-item span { font-size: 16px; font-weight: 700; color: #2563eb; }
+
+  .wifi-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .wifi-label { font-size: 10px; color: #2563eb; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+  .wifi-pwd { font-family: monospace; font-size: 18px; font-weight: 700; color: #2563eb; }
+
+  .weather-bar { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 10px; }
+  .weather-temp { font-size: 28px; font-weight: 800; }
+  .weather-desc { font-size: 13px; color: #475569; }
+  .weather-detail { font-size: 11px; color: #94a3b8; }
+
+  .report-text { font-size: 13px; line-height: 1.8; color: #1e293b; white-space: pre-wrap; }
+
+  .poi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .poi-item { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .poi-name { font-size: 12px; font-weight: 600; }
+  .poi-type { font-size: 10px; color: #94a3b8; }
+  .poi-dist { font-size: 11px; color: #2563eb; font-weight: 600; }
+
+  .qr-note { text-align: center; padding: 14px; background: #f1f5f9; border-radius: 8px; font-size: 11px; color: #64748b; margin-top: 14px; }
+  .footer { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>${hotelName}</h1>
+  <div class="date">${date}${lang !== 'de' ? ' &nbsp;·&nbsp; ' + (langLabels[lang]||lang) : ''}</div>
+  <div class="powered">Swiss Concierge AI · Powered by ZeroGen</div>
+</div>
+
+${wifi ? `<div class="wifi-box">
+  <div>
+    <div class="wifi-label">WLAN Passwort</div>
+    <div class="wifi-pwd">${wifi}</div>
+  </div>
+</div>` : ''}
+
+${(checkin || checkout) ? `<div class="section">
+  <div class="section-title">Check-in / Check-out</div>
+  <div class="info-row">
+    ${checkin  ? `<div class="info-item"><label>Check-in</label><span>${checkin}</span></div>` : ''}
+    ${checkout ? `<div class="info-item"><label>Check-out</label><span>${checkout}</span></div>` : ''}
+  </div>
+</div>` : ''}
+
+${(weatherTemp || weatherDesc) ? `<div class="section">
+  <div class="section-title">Wetter heute</div>
+  <div class="weather-bar">
+    <div class="weather-temp">${weatherTemp}</div>
+    <div>
+      <div class="weather-desc">${weatherDesc}</div>
+      <div class="weather-detail">${weatherDetail}</div>
+    </div>
+  </div>
+</div>` : ''}
+
+<div class="section">
+  <div class="section-title">Tages-Briefing</div>
+  <div class="report-text">${reportText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+</div>
+
+${pois.length ? `<div class="section">
+  <div class="section-title">Restaurants & Aktivitaeten in der Naehe</div>
+  <div class="poi-grid">
+    ${pois.map(p => `<div class="poi-item">
+      <div><div class="poi-name">${p.name}</div><div class="poi-type">${p.type}</div></div>
+      <div class="poi-dist">${p.dist}</div>
+    </div>`).join('')}
+  </div>
+</div>` : ''}
+
+<div class="qr-note">
+  Dieses Briefing wurde automatisch von Swiss Concierge AI generiert.
+  Weitere Infos und aktualisierte Reports: QR-Code scannen.
+</div>
+
+<div class="footer">
+  Swiss Concierge AI · ZeroGen · ${new Date().getFullYear()} &nbsp;·&nbsp; ${date}
+</div>
+
+</body>
+</html>`;
+
+  // Neues Fenster oeffnen und drucken
+  const win = window.open('', '_blank', 'width=800,height=1000');
+  win.document.write(printHTML);
+  win.document.close();
+  win.focus();
+  setTimeout(() => {
+    win.print();
+  }, 600);
+}
+
 
 function openSBB() {
   window.open('https://www.sbb.ch/de/kaufen/pages/fahrplan/fahrplan.xhtml?von=' + encodeURIComponent(hotelAddress), '_blank');
