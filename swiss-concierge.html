@@ -4,238 +4,303 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Swiss Concierge AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-/* ══ DARK MODE – Landing Page Style ══ */
+/* ═══════════════════════════════════════════════
+   SWISS CONCIERGE AI — DESIGN SYSTEM v3
+   Palette: Deep Navy · Electric Blue · Mint
+   Font: Syne (display) + DM Sans (body) + DM Mono
+═══════════════════════════════════════════════ */
 :root {
-  --bg:      #0a0f1e;
-  --bg2:     #111827;
-  --bg3:     #1a2235;
-  --surface: #111827;
-  --surface2:#1a2235;
-  --border:  rgba(255,255,255,.08);
-  --border2: rgba(255,255,255,.12);
-  --blue:    #2563eb;
-  --blue-lt: rgba(37,99,235,.15);
-  --blue-mid:rgba(37,99,235,.3);
-  --blue-bright:#3b82f6;
-  --red:     #ef4444;
-  --red-lt:  rgba(239,68,68,.15);
-  --green:   #10b981;
-  --green-lt:rgba(16,185,129,.15);
-  --amber:   #f59e0b;
-  --amber-lt:rgba(245,158,11,.15);
-  --purple:  #7c3aed;
-  --purple-lt:rgba(124,58,237,.15);
-  --text:    #f1f5f9;
-  --text2:   #94a3b8;
-  --muted:   #64748b;
-  --sw:      220px;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+  /* Backgrounds */
+  --bg:      #070c18;
+  --bg2:     #0d1426;
+  --bg3:     #141d35;
+  --bg4:     #1a2540;
 
-/* Grid background */
+  /* Brand */
+  --blue:    #2b6aff;
+  --blue-dk: #1a4fd4;
+  --blue-lt: #5b8fff;
+  --blue-xl: #a0bfff;
+  --blue-glow: rgba(43,106,255,.22);
+  --blue-bg:   rgba(43,106,255,.08);
+  --blue-bd:   rgba(43,106,255,.25);
+
+  /* Accents */
+  --mint:    #00e5b4;
+  --mint-dk: #00b890;
+  --mint-bg: rgba(0,229,180,.08);
+  --mint-bd: rgba(0,229,180,.2);
+
+  --amber:   #ffb547;
+  --amber-bg:rgba(255,181,71,.08);
+  --amber-bd:rgba(255,181,71,.2);
+
+  --red:     #ff4d6a;
+  --red-bg:  rgba(255,77,106,.08);
+  --red-bd:  rgba(255,77,106,.2);
+
+  --purple:  #9b6dff;
+  --purple-bg:rgba(155,109,255,.08);
+  --purple-bd:rgba(155,109,255,.2);
+
+  /* Text */
+  --text:    #eef2ff;
+  --text2:   #8899cc;
+  --text3:   #4a5a88;
+  --text4:   #2a3560;
+
+  /* Borders */
+  --bd:      rgba(255,255,255,.07);
+  --bd2:     rgba(255,255,255,.12);
+  --bd3:     rgba(255,255,255,.18);
+
+  /* Shadows */
+  --shadow:  0 2px 12px rgba(0,0,0,.4);
+  --shadow2: 0 8px 32px rgba(0,0,0,.5);
+  --shadow3: 0 24px 64px rgba(0,0,0,.6);
+
+  /* Radius */
+  --r:  10px;
+  --r2: 14px;
+  --r3: 20px;
+
+  /* Sidebar */
+  --sw: 230px;
+}
+
+/* ── BASE ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;overflow-x:hidden;}
+
+/* Noise overlay */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* Grid BG */
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:linear-gradient(rgba(37,99,235,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.04) 1px,transparent 1px);
-  background-size:48px 48px;}
+  background-image:linear-gradient(rgba(43,106,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(43,106,255,.03) 1px,transparent 1px);
+  background-size:52px 52px;}
 
 /* ── AUTH ── */
-#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;position:relative;z-index:1;}
-.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
-.auth-logo{text-align:center;margin-bottom:28px;}
-.auth-logo-icon{width:52px;height:52px;background:var(--blue);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;}
-.auth-logo h1{font-size:20px;font-weight:700;color:var(--text);}
-.auth-logo p{font-size:13px;color:var(--muted);margin-top:4px;}
-.auth-tabs{display:flex;background:rgba(255,255,255,.05);border-radius:10px;padding:3px;margin-bottom:24px;}
-.auth-tab{flex:1;text-align:center;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:.15s;}
-.auth-tab.active{background:var(--blue);color:white;}
-.auth-label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin:10px 0 4px;}
-.auth-input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
-.auth-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
-.auth-btn{width:100%;margin-top:16px;padding:12px;background:var(--blue);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;}
-.auth-btn:hover{background:#1d4ed8;}
-.auth-err{font-size:12px;color:#f87171;margin-top:10px;text-align:center;min-height:16px;}
-.auth-link{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
-.auth-link a{color:var(--blue-bright);text-decoration:none;}
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1;}
+.auth-box{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r3);padding:44px;width:100%;max-width:400px;box-shadow:var(--shadow3);}
+.auth-logo{text-align:center;margin-bottom:32px;}
+.auth-logo-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--blue),var(--blue-lt));border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;box-shadow:0 0 32px var(--blue-glow);}
+.auth-logo h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);}
+.auth-logo p{font-size:13px;color:var(--text2);margin-top:4px;}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:var(--r);padding:3px;margin-bottom:26px;border:1px solid var(--bd);}
+.auth-tab{flex:1;text-align:center;padding:8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);transition:.15s;}
+.auth-tab.active{background:var(--blue);color:white;box-shadow:0 0 16px var(--blue-glow);}
+.auth-label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin:10px 0 5px;letter-spacing:.3px;}
+.auth-input{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
+.auth-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);}
+.auth-btn{width:100%;margin-top:18px;padding:12px;background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 0 20px var(--blue-glow);}
+.auth-btn:hover{transform:translateY(-1px);box-shadow:0 4px 24px var(--blue-glow);}
+.auth-err{font-size:12px;color:var(--red);margin-top:10px;text-align:center;min-height:16px;}
+.auth-link{text-align:center;margin-top:16px;font-size:12px;color:var(--text3);}
+.auth-link a{color:var(--blue-lt);text-decoration:none;}
 
 /* ── PAYWALL ── */
-#paywallScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;position:relative;z-index:1;}
-.paywall-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;width:100%;max-width:640px;}
-.paywall-header{text-align:center;margin-bottom:28px;}
-.paywall-header h2{font-size:22px;font-weight:700;margin-bottom:8px;}
+#paywallScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1;}
+.paywall-box{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r3);padding:40px;width:100%;max-width:660px;box-shadow:var(--shadow3);}
+.paywall-header{text-align:center;margin-bottom:32px;}
+.paywall-header h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;}
 .paywall-header p{font-size:14px;color:var(--text2);}
-.plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px;}
-.plan-card{border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:.2s;text-align:center;position:relative;background:var(--bg3);}
+.plan-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.plan-card{border:1px solid var(--bd);border-radius:var(--r2);padding:20px;cursor:pointer;transition:.2s;text-align:center;background:var(--bg3);position:relative;}
 .plan-card:hover{border-color:var(--blue);transform:translateY(-2px);}
-.plan-card.popular{border-color:var(--blue);background:var(--blue-lt);}
-.plan-card .pop-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;}
-.plan-card-name{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.plan-card-price{font-size:26px;font-weight:800;color:var(--text);}
-.plan-card-price span{font-size:12px;font-weight:400;color:var(--muted);}
+.plan-card.popular{border-color:var(--blue);background:var(--blue-bg);}
+.pop-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;}
+.plan-card-name{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.plan-card-price{font-size:28px;font-weight:800;font-family:'Syne',sans-serif;color:var(--text);}
+.plan-card-price span{font-size:12px;font-weight:400;color:var(--text3);}
 .plan-card-desc{font-size:11px;color:var(--text2);margin-top:6px;}
-.paywall-divider{text-align:center;color:var(--muted);font-size:12px;margin:16px 0;position:relative;}
-.paywall-divider::before,.paywall-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border);}
-.paywall-divider::before{left:0;}.paywall-divider::after{right:0;}
+.paywall-div{text-align:center;color:var(--text3);font-size:12px;margin:16px 0;position:relative;}
+.paywall-div::before,.paywall-div::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--bd);}
+.paywall-div::before{left:0;}.paywall-div::after{right:0;}
 .credit-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
-.credit-btn{border:1px solid var(--border);border-radius:10px;padding:12px 18px;cursor:pointer;text-align:center;transition:.15s;background:var(--bg3);}
+.credit-btn{border:1px solid var(--bd);border-radius:var(--r);padding:12px 20px;cursor:pointer;text-align:center;transition:.15s;background:var(--bg3);}
 .credit-btn:hover{border-color:var(--blue);}
-.credit-btn-val{font-size:18px;font-weight:700;}
-.credit-btn-price{font-size:12px;color:var(--muted);}
-.paywall-logout{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
+.credit-btn-val{font-size:18px;font-weight:700;font-family:'Syne',sans-serif;}
+.credit-btn-price{font-size:12px;color:var(--text3);}
+.paywall-logout{text-align:center;margin-top:16px;font-size:12px;color:var(--text3);}
 .paywall-logout a{color:var(--red);cursor:pointer;}
 
 /* ── SIDEBAR ── */
 #adminLayout{display:flex;min-height:100vh;position:relative;z-index:1;}
-.sidebar{width:var(--sw);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .25s ease;}
-.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-.sb-logo-icon{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.sb-logo-name{font-weight:700;font-size:14px;color:var(--text);}
-.sb-logo-sub{font-size:10px;color:var(--muted);letter-spacing:.5px;}
-.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
-.nav-section{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:8px 8px 4px;}
-.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
+.sidebar{width:var(--sw);background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .25s cubic-bezier(.4,0,.2,1);}
+.sb-logo{padding:18px 16px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
+.sb-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--blue-lt));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 0 16px var(--blue-glow);}
+.sb-logo-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);}
+.sb-logo-sub{font-size:10px;color:var(--text3);letter-spacing:.3px;}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.nav-section{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--text4);text-transform:uppercase;padding:10px 10px 4px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;transition:.15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;}
 .nav-btn:hover{background:var(--bg3);color:var(--text);}
-.nav-btn.active{background:var(--blue-lt);color:var(--blue-bright);}
-.nav-btn .ni{font-size:15px;width:20px;text-align:center;}
-.sb-foot{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
-.plan-pill{margin:8px 16px 0;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;}
-.plan-pill.trial{background:var(--amber-lt);color:var(--amber);}
-.plan-pill.starter{background:var(--blue-lt);color:var(--blue-bright);}
-.plan-pill.pro{background:var(--purple-lt);color:var(--purple);}
-.plan-pill.enterprise{background:var(--green-lt);color:var(--green);}
-.credits-bar{margin:6px 16px 0;font-size:11px;color:var(--muted);}
-.credits-progress{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
-.credits-progress-inner{height:100%;background:var(--blue);border-radius:2px;transition:.3s;}
+.nav-btn.active{background:var(--blue-bg);color:var(--blue-lt);border:1px solid var(--blue-bd);}
+.nav-btn .ni{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--bd);font-size:11px;color:var(--text3);}
+.plan-pill{margin:10px 12px 0;padding:8px 12px;border-radius:var(--r);font-size:11px;font-weight:700;}
+.plan-pill.trial{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.plan-pill.starter{background:var(--blue-bg);color:var(--blue-lt);border:1px solid var(--blue-bd);}
+.plan-pill.pro{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
+.plan-pill.enterprise{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);}
+.credits-bar{margin:8px 16px 0;font-size:11px;color:var(--text3);}
+.credits-progress{height:3px;background:var(--bd);border-radius:2px;margin-top:5px;overflow:hidden;}
+.credits-progress-inner{height:100%;background:linear-gradient(90deg,var(--blue),var(--mint));border-radius:2px;transition:.4s;}
 
 /* ── MAIN ── */
 .main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
-.topbar-title{font-weight:600;font-size:15px;color:var(--text);}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--bd);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:600;font-size:15px;color:var(--text);}
 .topbar-right{display:flex;align-items:center;gap:10px;}
 .hamburger{display:none;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text);}
-.content{padding:24px;max-width:860px;}
+.content{padding:24px;max-width:900px;}
 
 /* ── CARDS ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
-.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.card-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;border-top:3px solid var(--blue);transition:.2s;}
-.stat-card.g{border-top-color:var(--green);}
-.stat-card.a{border-top-color:var(--amber);}
-.stat-card.p{border-top-color:var(--purple);}
-.stat-val{font-size:26px;font-weight:700;margin-bottom:2px;color:var(--text);}
-.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:22px;margin-bottom:16px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
+
+/* Stat grid */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:22px;}
+.stat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;transition:.2s;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card:nth-child(1)::before{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.stat-card:nth-child(2)::before{background:linear-gradient(90deg,var(--mint),var(--blue-lt));}
+.stat-card:nth-child(3)::before{background:linear-gradient(90deg,var(--amber),var(--red));}
+.stat-card:nth-child(4)::before{background:linear-gradient(90deg,var(--purple),var(--mint));}
+.stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:2px;color:var(--text);}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
 
 /* ── INPUTS ── */
-label{font-size:12px;font-weight:500;color:var(--text2);display:block;margin:10px 0 4px;}
-input[type=text],input[type=date],input[type=password],input[type=email],input[type=number],textarea,select{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
-input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);}
-textarea{min-height:80px;resize:vertical;}
+label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin:12px 0 5px;letter-spacing:.3px;text-transform:uppercase;}
+input[type=text],input[type=date],input[type=password],input[type=email],input[type=number],textarea,select{width:100%;padding:9px 13px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s;}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);}
+textarea{min-height:90px;resize:vertical;}
 select option{background:var(--bg3);}
 
 /* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.2s;}
-.btn-p{background:var(--blue);color:#fff;}.btn-p:hover{background:#1d4ed8;transform:translateY(-1px);}
-.btn-o{background:transparent;color:var(--blue-bright);border:1px solid var(--blue-mid);}.btn-o:hover{background:var(--blue-lt);}
-.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border);}.btn-g:hover{background:var(--bg3);}
-.btn-d{background:var(--red-lt);color:var(--red);border:1px solid rgba(239,68,68,.3);}.btn-d:hover{background:rgba(239,68,68,.25);}
-.btn-full{width:100%;justify-content:center;margin-top:8px;}
-.btn-sm{padding:5px 11px;font-size:12px;}
-.btn-sbb{background:#eb0000;color:white;}.btn-sbb:hover{background:#c00;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.2s;}
+.btn-p{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:#fff;box-shadow:0 0 16px var(--blue-glow);}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--blue-glow);}
+.btn-o{background:transparent;color:var(--blue-lt);border:1px solid var(--blue-bd);}
+.btn-o:hover{background:var(--blue-bg);}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--bd2);}
+.btn-g:hover{background:var(--bg3);color:var(--text);}
+.btn-d{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.btn-d:hover{background:rgba(255,77,106,.15);}
+.btn-m{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);}
+.btn-m:hover{background:rgba(0,229,180,.15);}
+.btn-full{width:100%;justify-content:center;margin-top:10px;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-sbb{background:#eb0000;color:white;border:none;}
+.btn-sbb:hover{background:#c00;}
 
 /* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
-.b-blue{background:var(--blue-lt);color:var(--blue-bright);}
-.b-green{background:var(--green-lt);color:var(--green);}
-.b-amber{background:var(--amber-lt);color:var(--amber);}
-.b-red{background:var(--red-lt);color:var(--red);}
-.b-purple{background:var(--purple-lt);color:var(--purple);}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;}
+.b-blue{background:var(--blue-bg);color:var(--blue-lt);border:1px solid var(--blue-bd);}
+.b-green{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);}
+.b-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.b-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.b-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
 
 /* ── TABLE ── */
-.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bd);}
 table{width:100%;border-collapse:collapse;}
-th{background:var(--bg3);font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
-td{padding:11px 14px;border-top:1px solid var(--border);vertical-align:middle;font-size:13px;color:var(--text2);}
+th{background:var(--bg3);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--bd);}
+td{padding:11px 14px;border-top:1px solid var(--bd);vertical-align:middle;font-size:13px;color:var(--text2);}
 tr:first-child td{border-top:none;}
 tr:hover td{background:var(--bg3);}
 
 /* ── LOC ITEM ── */
-.loc-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:12px;}
+.loc-item{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--bd);gap:12px;}
 .loc-item:last-child{border-bottom:none;}
-.loc-name{font-weight:600;font-size:13px;margin-bottom:2px;color:var(--text);}
-.loc-addr{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.loc-name{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;margin-bottom:3px;color:var(--text);}
+.loc-addr{font-size:12px;color:var(--text3);margin-bottom:5px;}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#fff;font-weight:600;font-size:13px;padding:10px 22px;border-radius:30px;z-index:9999;transition:transform .3s ease;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--mint-dk),var(--blue));color:#fff;font-weight:700;font-size:13px;padding:10px 24px;border-radius:30px;z-index:9999;transition:transform .3s cubic-bezier(.4,0,.2,1);pointer-events:none;box-shadow:0 4px 24px rgba(0,0,0,.4);}
 #toast.show{transform:translateX(-50%) translateY(0);}
 
-/* ── BANNERS ── */
-.upgrade-banner{background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
-.upgrade-banner p{font-size:13px;color:var(--blue-bright);font-weight:500;}
+/* ── UPGRADE BANNER ── */
+.upgrade-banner{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r2);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.upgrade-banner p{font-size:13px;color:var(--amber);font-weight:500;}
 
 /* ── LANG TABS ── */
 .lang-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
-.lang-tab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--bg3);transition:.15s;}
-.lang-tab.active{background:var(--blue);color:white;border-color:var(--blue);}
+.lang-tab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--bd);color:var(--text3);background:var(--bg3);transition:.15s;}
+.lang-tab.active{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 0 10px var(--blue-glow);}
 
 /* ── OVERLAY + MOBILE ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
-@media(max-width:700px){
+.overlay{display:none;position:fixed;inset:0;background:rgba(7,12,24,.7);backdrop-filter:blur(4px);z-index:90;}
+@media(max-width:720px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);}
   .main{margin-left:0;}
   .hamburger{display:block;}
   .overlay.show{display:block;}
   .stat-grid{grid-template-columns:1fr 1fr;}
+  .plan-cards{grid-template-columns:1fr;}
 }
 
 /* ══ GAST VIEW ══ */
-#guestApp{max-width:600px;margin:0 auto;padding:20px;min-height:100vh;position:relative;z-index:1;}
-.g-topbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.g-hotel{font-size:20px;font-weight:700;color:var(--text);}
-.g-date{font-size:12px;color:var(--muted);margin-top:2px;}
-.wifi-card{background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
-.wifi-pwd{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--blue-bright);}
-.g-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+#guestApp{max-width:620px;margin:0 auto;padding:20px;min-height:100vh;position:relative;z-index:1;}
+
+.g-topbar{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r2);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.g-hotel{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);}
+.g-date{font-size:12px;color:var(--text3);margin-top:2px;}
+
+.wifi-card{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r2);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.wifi-pwd{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--blue-lt);}
+
+.g-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:20px;margin-bottom:14px;}
 .g-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.g-card-title{font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;}
-.report-text{font-size:15px;line-height:1.8;color:var(--text);white-space:pre-wrap;}
+.g-card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.report-text{font-size:15px;line-height:1.85;color:var(--text);white-space:pre-wrap;}
 
-/* Weather bar */
-.weather-bar{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;}
-.weather-temp{font-size:28px;font-weight:800;color:var(--text);}
+/* Weather */
+.weather-bar{display:flex;align-items:center;gap:14px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:14px 18px;margin-bottom:14px;flex-wrap:wrap;}
+.weather-temp{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--text);}
 .weather-desc{font-size:13px;color:var(--text2);}
-.weather-detail{font-size:11px;color:var(--muted);}
+.weather-detail{font-size:11px;color:var(--text3);}
 
-/* Restaurant cards */
+/* Stay bar */
+#stayBar{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:14px 18px;margin-bottom:14px;}
+
+/* Restaurants */
 .restaurant-grid{display:grid;gap:10px;margin-top:10px;}
-.resto-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
+.resto-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;}
+.resto-card:hover{border-color:var(--blue-bd);background:var(--bg4);}
 .resto-icon{font-size:20px;flex-shrink:0;}
-.resto-name{font-weight:600;font-size:13px;color:var(--text);margin-bottom:2px;}
-.resto-type{font-size:11px;color:var(--muted);}
-.resto-dist{font-size:11px;color:var(--blue-bright);margin-left:auto;flex-shrink:0;}
+.resto-name{font-weight:600;font-size:13px;color:var(--text);margin-bottom:1px;}
+.resto-type{font-size:11px;color:var(--text3);}
+.resto-dist{font-size:11px;color:var(--blue-lt);margin-left:auto;flex-shrink:0;font-family:'DM Mono',monospace;}
 
-#map{height:220px;border-radius:10px;border:1px solid var(--border);margin-top:12px;}
-select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;}
-.g-footer{text-align:center;padding:16px 0 8px;font-size:11px;color:var(--muted);}
+#map{height:220px;border-radius:var(--r);border:1px solid var(--bd);margin-top:12px;}
+select#guestLang{width:auto;padding:5px 10px;font-size:12px;}
+.g-footer{text-align:center;padding:16px 0 8px;font-size:11px;color:var(--text4);}
+
 /* Plan styles */
-.plan-day{margin-bottom:20px;}
-.plan-day-title{font-size:14px;font-weight:700;color:var(--blue-bright);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
-.plan-slot{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start;}
-.plan-slot-time{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;min-width:80px;padding-top:2px;}
+.plan-day{margin-bottom:22px;}
+.plan-day-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue-lt);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+.plan-slot{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;}
+.plan-slot-time{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;min-width:80px;padding-top:3px;flex-shrink:0;}
 .plan-slot-content{flex:1;}
 .plan-slot-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
 .plan-slot-desc{font-size:12px;color:var(--text2);line-height:1.5;}
-.plan-slot-link{display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:11px;color:var(--blue-bright);text-decoration:none;background:var(--blue-lt);padding:2px 8px;border-radius:12px;}
-.plan-slot-link:hover{background:var(--blue-mid);}
-.plan-slot-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.plan-slot-link{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;color:var(--blue-lt);text-decoration:none;background:var(--blue-bg);border:1px solid var(--blue-bd);padding:3px 9px;border-radius:20px;transition:.15s;}
+.plan-slot-link:hover{background:rgba(43,106,255,.15);}
+.plan-slot-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -248,7 +313,7 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
     <div class="auth-logo">
       <div class="auth-logo-icon">🏨</div>
       <h1>Swiss Concierge AI</h1>
-      <p>Anmelden oder Konto erstellen</p>
+      <p>Anmelden oder registrieren</p>
     </div>
     <div class="auth-tabs">
       <div class="auth-tab active" onclick="switchAuth('login')" id="tab-login">Anmelden</div>
@@ -269,7 +334,7 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       <button class="auth-btn" onclick="doRegister()">Konto erstellen – 10 Gratis-Credits</button>
     </div>
     <div class="auth-err" id="authErr"></div>
-    <div class="auth-link"><a href="index.html">Zurueck zur Startseite</a></div>
+    <div class="auth-link"><a href="index.html">← Startseite</a></div>
   </div>
 </div>
 
@@ -277,9 +342,9 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
 <div id="paywallScreen" style="display:none">
   <div class="paywall-box">
     <div class="paywall-header">
-      <div style="font-size:36px;margin-bottom:12px">🔒</div>
-      <h2>Plan waehlen oder Credits kaufen</h2>
-      <p>Dein Konto ist aktiv – waehle einen Plan oder kaufe Credits.</p>
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <h2>Plan wählen oder Credits kaufen</h2>
+      <p>Wähle einen Plan oder kaufe Credits um loszulegen.</p>
     </div>
     <div class="plan-cards">
       <div class="plan-card" onclick="goToStripe('starter')">
@@ -299,7 +364,7 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
         <div class="plan-card-desc">Unlimitiert</div>
       </div>
     </div>
-    <div class="paywall-divider">oder Pay-on-Demand</div>
+    <div class="paywall-div">oder Pay-on-Demand</div>
     <div class="credit-row">
       <div class="credit-btn" onclick="goToStripe('credits50')">
         <div class="credit-btn-val">50 Credits</div>
@@ -310,9 +375,9 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
         <div class="credit-btn-price">CHF 29</div>
       </div>
     </div>
-    <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px">Kreditkarte · Twint · SEPA · via Stripe</p>
-    <div style="background:var(--amber-lt);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;text-align:center">
-      <p style="font-size:13px;color:var(--amber);font-weight:500">Nach der Zahlung: Seite neu laden – Plan wird aktiviert.</p>
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:10px">Kreditkarte · Twint · SEPA · via Stripe</p>
+    <div style="background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r);padding:12px 16px;text-align:center">
+      <p style="font-size:13px;color:var(--amber);font-weight:500">Nach Zahlung: Seite neu laden – Plan wird aktiviert.</p>
     </div>
     <div class="paywall-logout">Falsches Konto? <a onclick="doLogout()">Abmelden</a></div>
   </div>
@@ -324,7 +389,10 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
   <aside class="sidebar" id="sidebar">
     <div class="sb-logo">
       <div class="sb-logo-icon">🏨</div>
-      <div><div class="sb-logo-name">Concierge AI</div><div class="sb-logo-sub">Swiss Hotels</div></div>
+      <div>
+        <div class="sb-logo-name">Concierge AI</div>
+        <div class="sb-logo-sub">Swiss Hotels · ZeroGen</div>
+      </div>
     </div>
     <div class="plan-pill trial" id="planPill">– Plan –</div>
     <div class="credits-bar" id="creditsBar" style="display:none">
@@ -344,34 +412,37 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       <button class="nav-btn" onclick="switchPage('billing')" id="nav-billing"><span class="ni">💳</span> Abonnement</button>
       <button class="nav-btn" onclick="switchPage('settings')" id="nav-settings"><span class="ni">⚙️</span> Einstellungen</button>
     </nav>
-    <div class="sb-foot"><div id="sbUserEmail" style="word-break:break-all;margin-bottom:2px"></div>ZeroGen · Swiss Concierge AI</div>
+    <div class="sb-foot">
+      <div id="sbUserEmail" style="word-break:break-all;margin-bottom:2px;font-size:10px"></div>
+      ZeroGen · Swiss Concierge AI
+    </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:12px">
+      <div class="topbar-left">
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
         <span class="topbar-title" id="pageTitle">Standorte</span>
       </div>
       <div class="topbar-right">
-        <span id="topbarDate" style="font-size:12px;color:var(--muted)"></span>
+        <span id="topbarDate" style="font-size:12px;color:var(--text3)"></span>
         <button class="btn btn-g btn-sm" onclick="doLogout()">Abmelden</button>
       </div>
     </div>
 
     <div class="content">
       <div class="upgrade-banner" id="upgradeBanner" style="display:none">
-        <p>Credits fast aufgebraucht.</p>
-        <button class="btn btn-p btn-sm" onclick="switchPage('billing')">Credits kaufen</button>
+        <p>⚡ Credits fast aufgebraucht</p>
+        <button class="btn btn-m btn-sm" onclick="switchPage('billing')">Credits kaufen</button>
       </div>
 
       <!-- STANDORTE -->
       <div id="page-standorte">
         <div class="stat-grid">
           <div class="stat-card"><div class="stat-val" id="statTotal">–</div><div class="stat-lbl">Standorte</div></div>
-          <div class="stat-card g"><div class="stat-val" id="statRep">–</div><div class="stat-lbl">Report heute</div></div>
-          <div class="stat-card a"><div class="stat-val" id="statMiss">–</div><div class="stat-lbl">Fehlend</div></div>
-          <div class="stat-card p"><div class="stat-val" id="statCredits">–</div><div class="stat-lbl">Credits</div></div>
+          <div class="stat-card"><div class="stat-val" id="statRep">–</div><div class="stat-lbl">Report heute</div></div>
+          <div class="stat-card"><div class="stat-val" id="statMiss">–</div><div class="stat-lbl">Fehlend</div></div>
+          <div class="stat-card"><div class="stat-val" id="statCredits">–</div><div class="stat-lbl">Credits</div></div>
         </div>
         <div class="card">
           <div class="card-hd">
@@ -399,25 +470,25 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
             <div>
               <label>Zielgruppe</label>
               <select id="locGuest">
-                <option value="alle">Alle Gaeste</option>
+                <option value="alle">Alle Gäste</option>
                 <option value="familie">Familien mit Kindern</option>
                 <option value="kultur">Kulturtouristen</option>
                 <option value="business">Business</option>
-                <option value="paerchen">Paerchen / Romantik</option>
+                <option value="paerchen">Pärchen / Romantik</option>
                 <option value="senioren">Senioren</option>
               </select>
             </div>
           </div>
           <label>Adresse</label>
-          <input type="text" id="locAddr" placeholder="Hauptstrasse 1, 8001 Zuerich">
+          <input type="text" id="locAddr" placeholder="Hauptstrasse 1, 8001 Zürich">
           <button class="btn btn-p btn-full" onclick="addLocation()">Speichern & Koordinaten finden</button>
         </div>
         <div class="card">
           <div class="card-hd">
             <div class="card-title">Aktive Standorte</div>
-            <button class="btn btn-g btn-sm" onclick="loadLocations()">Aktualisieren</button>
+            <button class="btn btn-g btn-sm" onclick="loadLocations()">↺ Aktualisieren</button>
           </div>
-          <div id="locationList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+          <div id="locationList"><div style="color:var(--text3);font-size:13px">Lade...</div></div>
         </div>
       </div>
 
@@ -425,10 +496,10 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       <div id="page-reports" style="display:none">
         <div class="card">
           <div class="card-hd">
-            <div class="card-title">Tagesreports – Heute</div>
-            <button class="btn btn-g btn-sm" onclick="loadReports()">Aktualisieren</button>
+            <div class="card-title">Alle Reports</div>
+            <button class="btn btn-g btn-sm" onclick="loadReports()">↺ Aktualisieren</button>
           </div>
-          <div id="reportList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+          <div id="reportList"><div style="color:var(--text3);font-size:13px">Lade...</div></div>
         </div>
       </div>
 
@@ -440,28 +511,28 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
             <div><label>Standort</label><select id="manualLoc"><option>Lade...</option></select></div>
             <div><label>Datum</label><input type="date" id="manualDate"></div>
           </div>
-          <label>Sprachen generieren</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-de" checked> DE</label>
-            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-en"> EN</label>
-            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-fr"> FR</label>
-            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer"><input type="checkbox" id="lang-it"> IT</label>
-          </div>
-          <div style="background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:10px;padding:14px;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:600;color:var(--blue-bright);margin-bottom:10px">Gast-Informationen (optional)</div>
+          <div style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r);padding:14px;margin-top:12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--blue-lt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Gast-Informationen</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
               <div><label>Gast-Name</label><input type="text" id="guestNameField" placeholder="z.B. Familie Müller"></div>
               <div><label>Anreise</label><input type="date" id="guestArrivalField"></div>
               <div><label>Abreise</label><input type="date" id="guestDepartureField"></div>
             </div>
           </div>
+          <label>Sprachen generieren</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0"><input type="checkbox" id="lang-de" checked> DE</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0"><input type="checkbox" id="lang-en"> EN</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0"><input type="checkbox" id="lang-fr"> FR</label>
+            <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0"><input type="checkbox" id="lang-it"> IT</label>
+          </div>
           <label>Inhalt (Deutsch)</label>
-          <textarea id="manualContent" rows="8" placeholder="Guten Morgen! Herzlich willkommen..."></textarea>
+          <textarea id="manualContent" rows="7" placeholder="Guten Morgen! Herzlich willkommen..."></textarea>
           <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-o" onclick="generateReport()" style="flex:1">Groq generieren</button>
+            <button class="btn btn-o" onclick="generateReport()" style="flex:1">🤖 Groq generieren</button>
             <button class="btn btn-p" onclick="saveManual()" style="flex:1">Speichern</button>
           </div>
-          <div id="genProgress" style="margin-top:10px;font-size:12px;color:var(--muted);display:none"></div>
+          <div id="genProgress" style="margin-top:12px;font-size:12px;color:var(--text2);display:none;padding:10px 14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--bd)"></div>
         </div>
       </div>
 
@@ -469,33 +540,31 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       <div id="page-aufenthalt" style="display:none">
         <div class="card">
           <div class="card-hd"><div class="card-title">Aufenthaltsplan generieren</div></div>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">
-            Erstellt basierend auf Check-in/out und Gäste-Profil einen individuellen Tagesplan mit Aktivitäten, Shopping und Restaurants.
-          </p>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Erstellt einen individuellen Tagesplan mit Aktivitäten, Shopping und Restaurants.</p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div><label>Standort</label><select id="planLoc"><option>Lade...</option></select></div>
             <div>
               <label>Aufenthalt</label>
               <div style="display:flex;gap:8px">
-                <input type="date" id="planCheckin" placeholder="Check-in">
-                <input type="date" id="planCheckout" placeholder="Check-out">
+                <input type="date" id="planCheckin">
+                <input type="date" id="planCheckout">
               </div>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0">
             <div>
               <label>Interessen</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-kultur" checked> Kultur</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-natur" checked> Natur</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-shopping"> Shopping</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-gastronomie" checked> Gastronomie</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-sport"> Sport</label>
-                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="int-family"> Familie</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-kultur" checked> Kultur</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-natur" checked> Natur</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-shopping"> Shopping</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-gastronomie" checked> Gastronomie</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-sport"> Sport</label>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0"><input type="checkbox" id="int-family"> Familie</label>
               </div>
             </div>
             <div>
-              <label>Sprache des Plans</label>
+              <label>Sprache</label>
               <select id="planLang">
                 <option value="de">Deutsch</option>
                 <option value="en">English</option>
@@ -506,8 +575,8 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
           </div>
           <label>Zusätzliche Hinweise (optional)</label>
           <input type="text" id="planNotes" placeholder="z.B. Auto vorhanden, Budget sparsam, mit Kleinkind...">
-          <button class="btn btn-p btn-full" onclick="generateStayPlan()">Aufenthaltsplan generieren</button>
-          <div id="planProgress" style="margin-top:10px;font-size:12px;color:var(--muted);display:none"></div>
+          <button class="btn btn-p btn-full" onclick="generateStayPlan()">📅 Plan generieren</button>
+          <div id="planProgress" style="margin-top:10px;font-size:12px;color:var(--text2);display:none;padding:10px 14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--bd)"></div>
         </div>
         <div class="card" id="planResult" style="display:none">
           <div class="card-hd">
@@ -518,6 +587,34 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
             </div>
           </div>
           <div id="planContent" style="font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap"></div>
+        </div>
+      </div>
+
+      <!-- KUNDEN -->
+      <div id="page-kunden" style="display:none">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Kunde aktivieren</div></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Trage die Email des Kunden ein und setze den Plan nach der Stripe-Zahlung.</p>
+          <label>Email des Kunden</label>
+          <input type="email" id="customerEmail" placeholder="kunde@beispiel.ch">
+          <label>Plan</label>
+          <select id="customerPlan">
+            <option value="starter">Starter – CHF 29/Mt</option>
+            <option value="pro">Pro – CHF 79/Mt</option>
+            <option value="enterprise">Enterprise – CHF 199/Mt</option>
+            <option value="trial">Trial (10 Credits)</option>
+          </select>
+          <label>Credits setzen</label>
+          <input type="number" id="customerCredits" placeholder="30" value="30">
+          <button class="btn btn-p btn-full" onclick="activateCustomer()">Plan aktivieren</button>
+          <div id="customerStatus" style="margin-top:12px;font-size:13px"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Alle Kunden</div>
+            <button class="btn btn-g btn-sm" onclick="loadCustomers()">↺ Aktualisieren</button>
+          </div>
+          <div id="customerList"><div style="color:var(--text3);font-size:13px">Klicke auf Aktualisieren...</div></div>
         </div>
       </div>
 
@@ -532,18 +629,18 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
           </div>
         </div>
         <div class="card">
-          <div class="card-hd"><div class="card-title">Report-Credits kaufen</div></div>
+          <div class="card-hd"><div class="card-title">Credits kaufen</div></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;background:var(--bg3)">
-              <div style="font-size:22px;font-weight:800">50 Credits</div>
-              <div style="color:var(--muted);font-size:12px;margin:4px 0 12px">CHF 0.18 / Report</div>
-              <div style="font-size:20px;font-weight:700;color:var(--blue-bright);margin-bottom:12px">CHF 9</div>
+            <div style="border:1px solid var(--bd);border-radius:var(--r2);padding:18px;text-align:center;background:var(--bg3)">
+              <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800">50 Credits</div>
+              <div style="color:var(--text3);font-size:12px;margin:4px 0 12px">CHF 0.18 / Report</div>
+              <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--blue-lt);margin-bottom:14px">CHF 9</div>
               <button class="btn btn-o btn-full" style="margin-top:0" onclick="goToStripe('credits50')">Kaufen</button>
             </div>
-            <div style="border:1px solid var(--blue);border-radius:10px;padding:16px;text-align:center;background:var(--blue-lt)">
-              <div style="font-size:22px;font-weight:800">200 Credits</div>
-              <div style="color:var(--muted);font-size:12px;margin:4px 0 12px">CHF 0.14 / Report</div>
-              <div style="font-size:20px;font-weight:700;color:var(--blue-bright);margin-bottom:12px">CHF 29</div>
+            <div style="border:1px solid var(--blue-bd);border-radius:var(--r2);padding:18px;text-align:center;background:var(--blue-bg)">
+              <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800">200 Credits</div>
+              <div style="color:var(--text3);font-size:12px;margin:4px 0 12px">CHF 0.14 / Report</div>
+              <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--blue-lt);margin-bottom:14px">CHF 29</div>
               <button class="btn btn-p btn-full" style="margin-top:0" onclick="goToStripe('credits200')">Kaufen</button>
             </div>
           </div>
@@ -557,37 +654,6 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
         </div>
       </div>
 
-      <!-- KUNDEN -->
-      <div id="page-kunden" style="display:none">
-        <div class="card">
-          <div class="card-hd"><div class="card-title">Kunde aktivieren / Plan setzen</div></div>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
-            Trage die Email des Kunden ein (muss sich vorher registriert haben) und setze den Plan nach der Stripe-Zahlung.
-          </p>
-          <label>Email des Kunden</label>
-          <input type="email" id="customerEmail" placeholder="kunde@beispiel.ch">
-          <label>Plan</label>
-          <select id="customerPlan">
-            <option value="starter">Starter – CHF 29/Mt (1 Standort, 30 Credits)</option>
-            <option value="pro">Pro – CHF 79/Mt (5 Standorte, 200 Credits)</option>
-            <option value="enterprise">Enterprise – CHF 199/Mt (unbegrenzt)</option>
-            <option value="trial">Trial (10 Credits)</option>
-          </select>
-          <label>Credits manuell setzen</label>
-          <input type="number" id="customerCredits" placeholder="z.B. 30" value="30">
-          <button class="btn btn-p btn-full" onclick="activateCustomer()">Plan aktivieren</button>
-          <div id="customerStatus" style="margin-top:12px;font-size:13px"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-hd">
-            <div class="card-title">Alle Kunden</div>
-            <button class="btn btn-g btn-sm" onclick="loadCustomers()">Aktualisieren</button>
-          </div>
-          <div id="customerList"><div style="color:var(--muted);font-size:13px">Klicke auf Aktualisieren...</div></div>
-        </div>
-      </div>
-
       <!-- SETTINGS -->
       <div id="page-settings" style="display:none">
         <div class="card">
@@ -596,43 +662,44 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
           <input type="password" id="groqKeyInput" placeholder="gsk_...">
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="btn btn-p" onclick="saveGroqKey()">Speichern</button>
-            <button class="btn btn-d" onclick="deleteGroqKey()">Loeschen</button>
+            <button class="btn btn-d" onclick="deleteGroqKey()">Löschen</button>
           </div>
           <div id="groqStatus" style="margin-top:12px;font-size:13px"></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">Automatischer Tages-Job</div></div>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">cron-job.org ruft taeglich um 06:00 die Trigger-URL auf und generiert alle Reports automatisch.</p>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">cron-job.org ruft täglich um 06:00 die Trigger-URL auf und generiert alle Reports + Aufenthaltspläne automatisch.</p>
           <label>Job-Token (geheim halten)</label>
-          <div style="display:flex;gap:8px;margin-bottom:4px">
-            <input type="text" id="jobTokenInput" placeholder="z.B. meinToken2025" style="flex:1;font-family:'DM Mono',monospace">
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <input type="text" id="jobTokenInput" placeholder="meinToken2025" style="flex:1;font-family:'DM Mono',monospace">
             <button class="btn btn-p" onclick="saveJobToken()">Speichern</button>
           </div>
-          <div id="jobTokenStatus" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
-          <label>Trigger-URL (fuer cron-job.org)</label>
+          <div id="jobTokenStatus" style="font-size:12px;color:var(--text3);margin-bottom:16px"></div>
+          <label>Trigger-URL</label>
           <div style="display:flex;gap:8px">
             <input type="text" id="triggerUrlDisplay" readonly style="flex:1;font-size:12px;font-family:'DM Mono',monospace">
             <button class="btn btn-o btn-sm" onclick="copyTriggerUrl()">Kopieren</button>
           </div>
-          <button class="btn btn-o btn-full" style="margin-top:12px" onclick="runJobNow()">Jetzt manuell ausfuehren</button>
-          <div id="jobLog" style="margin-top:12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:none;max-height:200px;overflow-y:auto;line-height:1.8;color:var(--text2)"></div>
+          <button class="btn btn-o btn-full" style="margin-top:12px" onclick="runJobNow()">▶ Jetzt manuell ausführen</button>
+          <div id="jobLog" style="margin-top:12px;font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);padding:12px;display:none;max-height:220px;overflow-y:auto;line-height:1.8;color:var(--text2)"></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">App Info</div></div>
           <div class="tbl-wrap">
             <table>
-              <tr><td style="color:var(--muted);width:140px">Version</td><td>2.0.0</td></tr>
-              <tr><td style="color:var(--muted)">User ID</td><td id="settingsUserId" style="font-size:11px;font-family:'DM Mono',monospace;word-break:break-all">–</td></tr>
-              <tr><td style="color:var(--muted)">Plan</td><td id="settingsPlan">–</td></tr>
-              <tr><td style="color:var(--muted)">Stack</td><td>Firebase · Groq · Stripe · OSM · Open-Meteo</td></tr>
+              <tr><td style="color:var(--text3);width:140px">Version</td><td>3.0.0</td></tr>
+              <tr><td style="color:var(--text3)">User ID</td><td id="settingsUserId" style="font-size:11px;font-family:'DM Mono',monospace;word-break:break-all">–</td></tr>
+              <tr><td style="color:var(--text3)">Plan</td><td id="settingsPlan">–</td></tr>
+              <tr><td style="color:var(--text3)">Stack</td><td>Firebase · Groq · Stripe · OSM · Open-Meteo</td></tr>
             </table>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-</div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /adminLayout -->
+</div><!-- /adminApp -->
 
 <!-- ══ GAST VIEW ══ -->
 <div id="guestApp" style="display:none">
@@ -640,26 +707,26 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
     <div>
       <div class="g-hotel" id="gHotelName">Willkommen</div>
       <div class="g-date" id="gDate"></div>
-      <div id="guestNameDisplay" style="font-size:12px;color:var(--blue-bright);font-weight:600;margin-top:2px;display:none"></div>
+      <div id="guestNameDisplay" style="font-size:12px;color:var(--mint);font-weight:600;margin-top:2px;display:none"></div>
     </div>
-    <div style="font-size:28px">🇨🇭</div>
+    <div style="font-size:32px">🇨🇭</div>
   </div>
 
-  <!-- Wetter Bar -->
-  <!-- Aufenthaltsdauer Bar -->
-  <div id="stayBar" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:none">
+  <!-- Stay Bar -->
+  <div id="stayBar" style="display:none;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:14px 18px;margin-bottom:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <div style="display:flex;gap:20px">
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Anreise</div><div style="font-size:15px;font-weight:700;color:var(--text)" id="stayArrival">–</div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Abreise</div><div style="font-size:15px;font-weight:700;color:var(--text)" id="stayDeparture">–</div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Nächte</div><div style="font-size:15px;font-weight:700;color:var(--blue-bright)" id="stayNights">–</div></div>
+      <div style="display:flex;gap:24px">
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Anreise</div><div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700" id="stayArrival">–</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Abreise</div><div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700" id="stayDeparture">–</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Nächte</div><div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:var(--mint)" id="stayNights">–</div></div>
       </div>
-      <span style="font-size:20px">🗓️</span>
+      <span style="font-size:22px">🗓️</span>
     </div>
   </div>
 
+  <!-- Weather -->
   <div id="weatherBar" class="weather-bar" style="display:none">
-    <div style="font-size:28px" id="weatherIcon">☀️</div>
+    <div style="font-size:32px" id="weatherIcon">☀️</div>
     <div style="flex:1">
       <div class="weather-temp" id="weatherTemp"></div>
       <div class="weather-desc" id="weatherDesc"></div>
@@ -667,24 +734,26 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
     </div>
   </div>
 
+  <!-- WLAN -->
   <div id="wifiCard" class="wifi-card" style="display:none">
-    <span style="font-size:26px">📶</span>
+    <span style="font-size:28px">📶</span>
     <div style="flex:1">
-      <div style="font-size:10px;color:var(--blue-bright);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">WLAN Passwort</div>
+      <div style="font-size:10px;color:var(--blue-lt);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">WLAN Passwort</div>
       <div class="wifi-pwd" id="gWifi"></div>
     </div>
     <button class="btn btn-o btn-sm" onclick="copyWifi()">Kopieren</button>
   </div>
 
-  <!-- Check-in Info -->
+  <!-- Check-in -->
   <div id="checkinCard" class="g-card" style="display:none">
     <div class="g-card-hd"><div class="g-card-title">Check-in / Check-out</div></div>
-    <div style="display:flex;gap:20px">
-      <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">CHECK-IN</div><div style="font-size:18px;font-weight:700;color:var(--green)" id="gCheckin">–</div></div>
-      <div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">CHECK-OUT</div><div style="font-size:18px;font-weight:700;color:var(--amber)" id="gCheckout">–</div></div>
+    <div style="display:flex;gap:24px">
+      <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">CHECK-IN</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:var(--mint)" id="gCheckin">–</div></div>
+      <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">CHECK-OUT</div><div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:var(--amber)" id="gCheckout">–</div></div>
     </div>
   </div>
 
+  <!-- Report -->
   <div class="g-card">
     <div class="g-card-hd">
       <div class="g-card-title">Tages-Briefing</div>
@@ -696,60 +765,56 @@ select#guestLang{width:auto;padding:6px 10px;font-size:12px;background:var(--bg3
       </select>
     </div>
     <div id="gContent" class="report-text">Lade Briefing...</div>
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);text-align:center" id="planBtnWrap">
-      <button class="btn btn-o" onclick="togglePlanRequest()" id="planToggleBtn" style="font-size:13px;gap:8px">
-        📅 Aufenthaltsplan anfordern
-      </button>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bd);text-align:center" id="planBtnWrap">
+      <button class="btn btn-o" onclick="togglePlanRequest()" id="planToggleBtn" style="font-size:13px">📅 Aufenthaltsplan anfordern</button>
     </div>
   </div>
 
-  <!-- Restaurants -->
-  <!-- Aufenthaltsplan Gast-View -->
-  <!-- Anfrage-Button (sichtbar wenn kein Plan vorhanden) -->
+  <!-- Plan request -->
   <div class="g-card" id="guestPlanRequestCard" style="display:none">
     <div style="text-align:center;padding:8px 0">
-      <div style="font-size:28px;margin-bottom:8px">📅</div>
-      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">Aufenthaltsplan anfordern</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Wir erstellen einen persönlichen Tagesplan mit Aktivitäten, Restaurants und Tipps für Ihren Aufenthalt.</div>
-      <button class="btn btn-p" onclick="requestGuestPlan()" id="requestPlanBtn">Aufenthaltsplan generieren</button>
+      <div style="font-size:32px;margin-bottom:10px">📅</div>
+      <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:600;margin-bottom:6px">Aufenthaltsplan anfordern</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Persönlicher Tagesplan mit Aktivitäten, Restaurants und Tipps.</div>
+      <button class="btn btn-p" onclick="requestGuestPlan()" id="requestPlanBtn">Plan generieren</button>
     </div>
   </div>
 
-  <!-- Plan Card - immer sichtbar wenn Plan vorhanden, Inhalt eingeklappt -->
+  <!-- Plan display -->
   <div class="g-card" id="guestPlanCard" style="display:none">
     <div class="g-card-hd" style="cursor:pointer" onclick="togglePlanView()">
       <div class="g-card-title">📅 Aufenthaltsplan</div>
       <div style="display:flex;align-items:center;gap:8px">
         <button class="btn btn-g btn-sm" onclick="event.stopPropagation();downloadGuestPlanPDF()">PDF</button>
-        <span id="planChevron" style="font-size:18px;color:var(--muted);transition:.2s">▼</span>
+        <span id="planChevron" style="font-size:18px;color:var(--text3);transition:.2s">▼</span>
       </div>
     </div>
-    <!-- Inhalt eingeklappt -->
     <div id="guestPlanCollapsed" style="padding:10px 0 4px;text-align:center;display:block">
-      <p style="font-size:13px;color:var(--muted)">Ihr persönlicher Tagesplan ist bereit.</p>
-      <button class="btn btn-p btn-sm" style="margin-top:8px" onclick="togglePlanView()">Plan anzeigen</button>
+      <p style="font-size:13px;color:var(--text2)">Ihr persönlicher Tagesplan ist bereit.</p>
+      <button class="btn btn-p btn-sm" style="margin-top:10px" onclick="togglePlanView()">Plan anzeigen</button>
     </div>
-    <!-- Inhalt ausgeklappt -->
     <div id="guestPlanContent" style="display:none"></div>
   </div>
 
+  <!-- Restaurants -->
   <div class="g-card" id="restoCard" style="display:none">
-    <div class="g-card-hd"><div class="g-card-title">Restaurants in der Naehe</div></div>
-    <div id="restoList"><div style="color:var(--muted);font-size:13px">Lade...</div></div>
+    <div class="g-card-hd"><div class="g-card-title" id="restoTitle">Restaurants & Aktivitäten</div></div>
+    <div id="restoList"><div style="color:var(--text3);font-size:13px">Lade...</div></div>
   </div>
 
+  <!-- Karte -->
   <div class="g-card">
     <div class="g-card-hd">
-      <div class="g-card-title">Karte & OeV</div>
+      <div class="g-card-title">Karte & ÖV</div>
       <button class="btn btn-sbb btn-sm" onclick="openSBB()">SBB Fahrplan</button>
     </div>
     <div id="map"></div>
   </div>
+
   <div style="text-align:center;padding:12px 0 4px">
-    <button class="btn btn-o" onclick="downloadPDF()" style="font-size:13px">
-      PDF herunterladen
-    </button>
+    <button class="btn btn-g" onclick="downloadPDF()" style="font-size:13px">📄 Report als PDF</button>
   </div>
+
   <div class="g-footer">Swiss Concierge AI · Powered by ZeroGen</div>
 </div>
 

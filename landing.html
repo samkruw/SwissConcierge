@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Concierge AI – KI-Gästebriefing für Schweizer Hotels & Airbnbs</title>
+<meta name="description" content="Automatische KI-Gästebriefings für Hotels und Airbnbs. Mehrsprachig, Echtzeit-Wetter, Aufenthaltsplan. Ab CHF 29/Monat.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   SWISS CONCIERGE AI — DESIGN SYSTEM v3
+   Palette: Deep Navy · Electric Blue · Mint
+   Font: Syne (display) + DM Sans (body) + DM Mono
+═══════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --bg:      #070c18;
+  --bg2:     #0d1426;
+  --bg3:     #141d35;
+  --bg4:     #1a2540;
+
+  /* Brand */
+  --blue:    #2b6aff;
+  --blue-dk: #1a4fd4;
+  --blue-lt: #5b8fff;
+  --blue-xl: #a0bfff;
+  --blue-glow: rgba(43,106,255,.22);
+  --blue-bg:   rgba(43,106,255,.08);
+  --blue-bd:   rgba(43,106,255,.25);
+
+  /* Accents */
+  --mint:    #00e5b4;
+  --mint-dk: #00b890;
+  --mint-bg: rgba(0,229,180,.08);
+  --mint-bd: rgba(0,229,180,.2);
+
+  --amber:   #ffb547;
+  --amber-bg:rgba(255,181,71,.08);
+  --amber-bd:rgba(255,181,71,.2);
+
+  --red:     #ff4d6a;
+  --red-bg:  rgba(255,77,106,.08);
+  --red-bd:  rgba(255,77,106,.2);
+
+  --purple:  #9b6dff;
+  --purple-bg:rgba(155,109,255,.08);
+  --purple-bd:rgba(155,109,255,.2);
+
+  /* Text */
+  --text:    #eef2ff;
+  --text2:   #8899cc;
+  --text3:   #4a5a88;
+  --text4:   #2a3560;
+
+  /* Borders */
+  --bd:      rgba(255,255,255,.07);
+  --bd2:     rgba(255,255,255,.12);
+  --bd3:     rgba(255,255,255,.18);
+
+  /* Shadows */
+  --shadow:  0 2px 12px rgba(0,0,0,.4);
+  --shadow2: 0 8px 32px rgba(0,0,0,.5);
+  --shadow3: 0 24px 64px rgba(0,0,0,.6);
+
+  /* Radius */
+  --r:  10px;
+  --r2: 14px;
+  --r3: 20px;
+
+  /* Sidebar */
+  --sw: 230px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(43,106,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(43,106,255,.04) 1px,transparent 1px);
+  background-size:52px 52px;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.02;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 28px;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(7,12,24,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd2);}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:11px;text-decoration:none;}
+.nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--blue-lt));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px var(--blue-glow);}
+.nav-logo-name{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);}
+.nav-logo-sub{font-size:10px;color:var(--text3);}
+.nav-links{display:flex;align-items:center;gap:30px;}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:13px;font-weight:500;transition:.15s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;padding:9px 22px;border-radius:var(--r);font-size:13px;font-weight:700;text-decoration:none;transition:.2s;box-shadow:0 0 20px var(--blue-glow);}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 24px var(--blue-glow);}
+
+/* HERO */
+.hero{min-height:96vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:90px 28px 70px;position:relative;}
+.hero-glow{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:800px;height:500px;border-radius:50%;background:radial-gradient(ellipse,rgba(43,106,255,.12),transparent 60%);pointer-events:none;}
+.hero-glow2{position:absolute;top:30%;left:30%;width:300px;height:300px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,229,180,.06),transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(43,106,255,.08);border:1px solid rgba(43,106,255,.2);padding:7px 20px;border-radius:30px;font-size:11px;font-weight:700;color:var(--blue-lt);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:32px;}
+.badge-dot{width:7px;height:7px;background:var(--mint);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,180,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(0,229,180,0)}}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(40px,7vw,76px);font-weight:800;line-height:1.05;letter-spacing:-2.5px;margin-bottom:26px;}
+.hero h1 .hl{color:var(--blue-lt);}
+.hero h1 .hl2{color:var(--mint);}
+.hero-sub{font-size:18px;color:var(--text2);max-width:580px;margin:0 auto 48px;line-height:1.8;}
+.hero-btns{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
+.btn-hero{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;padding:15px 36px;border-radius:var(--r2);text-decoration:none;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;transition:.2s;box-shadow:0 0 32px var(--blue-glow);}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 6px 32px var(--blue-glow);}
+.btn-hero-o{background:transparent;color:var(--text);padding:15px 30px;border-radius:var(--r2);text-decoration:none;font-weight:600;font-size:15px;border:1px solid var(--bd3);transition:.2s;}
+.btn-hero-o:hover{border-color:var(--blue-lt);color:var(--blue-lt);}
+.hero-note{margin-top:24px;font-size:12px;color:var(--text4);display:flex;align-items:center;justify-content:center;gap:8px;}
+.hero-note::before,.hero-note::after{content:'';width:24px;height:1px;background:var(--text4);}
+
+/* MOCKUP */
+.hero-mockup{margin-top:64px;max-width:860px;margin-left:auto;margin-right:auto;}
+.mockup-wrap{background:var(--bg2);border:1px solid var(--bd2);border-radius:20px;padding:22px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(43,106,255,.08);}
+.mockup-bar{display:flex;align-items:center;gap:7px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--bd);}
+.mdot{width:11px;height:11px;border-radius:50%;}
+.mockup-url{flex:1;background:var(--bg3);border-radius:7px;padding:6px 14px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:8px;}
+.mockup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.mc{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden;}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.mc:nth-child(1)::before{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.mc:nth-child(2)::before{background:linear-gradient(90deg,var(--mint),var(--blue-lt));}
+.mc:nth-child(3)::before{background:linear-gradient(90deg,var(--purple),var(--mint));}
+.mc-top{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.mc-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.mc-sub{font-size:10px;color:var(--text3);}
+.mockup-report{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r2);padding:16px;margin-top:10px;}
+.mr-hd{font-size:10px;font-weight:700;color:var(--blue-lt);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.mr-hd::after{content:'';flex:1;height:1px;background:var(--bd);}
+.mr-line{height:7px;background:var(--bd2);border-radius:4px;margin-bottom:7px;}
+.mr-pills{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;}
+.mr-pill{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.pill-g{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);}
+.pill-a{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+
+/* LOGOS */
+.logos{padding:40px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);}
+.logos-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text4);margin-bottom:18px;text-align:center;font-weight:600;}
+.logos-row{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;}
+.logo-chip{font-size:12px;font-weight:600;color:var(--text3);display:flex;align-items:center;gap:7px;letter-spacing:.2px;}
+
+/* STATS */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden;margin-top:52px;}
+.stat-it{padding:28px;text-align:center;border-right:1px solid var(--bd);}
+.stat-it:last-child{border-right:none;}
+.sv{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--text);letter-spacing:-1px;margin-bottom:4px;}
+.sl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+
+/* SECTION */
+.section{padding:96px 0;}
+.s-lbl{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mint);font-weight:700;margin-bottom:12px;}
+.s-title{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-.8px;margin-bottom:18px;line-height:1.1;}
+.s-sub{font-size:16px;color:var(--text2);max-width:540px;line-height:1.8;}
+
+/* FEATURES */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;margin-top:52px;}
+.feat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:26px;transition:.25s;position:relative;overflow:hidden;}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:.25s;}
+.feat-card.c1::before{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.feat-card.c2::before{background:linear-gradient(90deg,var(--mint),var(--blue));}
+.feat-card.c3::before{background:linear-gradient(90deg,var(--amber),var(--red));}
+.feat-card.c4::before{background:linear-gradient(90deg,var(--purple),var(--mint));}
+.feat-card:hover{border-color:var(--bd3);transform:translateY(-4px);box-shadow:var(--shadow2);}
+.feat-card:hover::before{opacity:1;}
+.feat-icon{font-size:30px;margin-bottom:16px;display:block;}
+.feat-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px;}
+.feat-desc{font-size:13px;color:var(--text2);line-height:1.7;}
+.feat-tag{display:inline-block;margin-top:12px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px;}
+.t-blue{background:var(--blue-bg);color:var(--blue-lt);border:1px solid var(--blue-bd);}
+.t-mint{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);}
+.t-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.t-purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd);}
+
+/* STEPS */
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);margin-top:56px;position:relative;}
+.steps-grid::before{content:'';position:absolute;top:28px;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--blue-bd),transparent);}
+.step{text-align:center;padding:0 20px;}
+.step-num{width:52px;height:52px;border-radius:50%;background:var(--bg3);border:1px solid var(--blue-bd);color:var(--blue-lt);font-family:'Syne',sans-serif;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;position:relative;z-index:1;transition:.25s;}
+.step:hover .step-num{background:var(--blue);border-color:var(--blue);color:white;box-shadow:0 0 24px var(--blue-glow);}
+.step-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;}
+.step-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+
+/* TESTIMONIALS */
+.testi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:52px;}
+.testi{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:24px;transition:.2s;}
+.testi:hover{border-color:var(--bd2);}
+.testi-stars{color:var(--amber);font-size:13px;margin-bottom:12px;letter-spacing:2px;}
+.testi-text{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:16px;font-style:italic;}
+.testi-author{display:flex;align-items:center;gap:10px;}
+.testi-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--mint));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;flex-shrink:0;}
+.testi-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.testi-role{font-size:11px;color:var(--text3);}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:52px;}
+.plan{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:30px;position:relative;transition:.2s;}
+.plan:hover{border-color:var(--bd2);}
+.plan.featured{border-color:var(--blue-bd);background:var(--bg3);box-shadow:0 0 48px rgba(43,106,255,.1);}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;font-size:10px;font-weight:700;padding:3px 14px;border-radius:20px;letter-spacing:.5px;white-space:nowrap;}
+.plan-name{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;}
+.plan-price{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;letter-spacing:-2px;margin-bottom:4px;}
+.plan-price span{font-size:14px;font-weight:400;color:var(--text3);}
+.plan-desc{font-size:13px;color:var(--text2);margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--bd);line-height:1.55;}
+.plan-features{list-style:none;margin-bottom:28px;}
+.plan-features li{font-size:13px;padding:7px 0;display:flex;align-items:center;gap:10px;color:var(--text2);}
+.plan-features li::before{content:'✓';color:var(--mint);font-weight:700;flex-shrink:0;font-size:12px;}
+.plan-features li.dim{color:var(--text3);}
+.plan-features li.dim::before{content:'–';color:var(--text3);}
+.btn-plan{display:block;text-align:center;padding:14px;border-radius:var(--r);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;transition:.2s;text-decoration:none;}
+.btn-plan-p{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;box-shadow:0 0 20px var(--blue-glow);}
+.btn-plan-p:hover{transform:translateY(-1px);}
+.btn-plan-o{background:transparent;color:var(--text);border:1px solid var(--bd2);}
+.btn-plan-o:hover{border-color:var(--text2);}
+
+/* CREDITS */
+.credits-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px;max-width:500px;}
+.ccard{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:24px;transition:.2s;}
+.ccard:hover{border-color:var(--blue-bd);}
+.ccard-amt{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:2px;}
+.ccard-lbl{font-size:12px;color:var(--text3);margin-bottom:10px;}
+.ccard-price{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--blue-lt);margin-bottom:2px;}
+.ccard-per{font-size:11px;color:var(--text3);}
+.btn-credit{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:9px 20px;background:var(--blue-bg);color:var(--blue-lt);border:1px solid var(--blue-bd);border-radius:var(--r);text-decoration:none;font-size:13px;font-weight:600;transition:.15s;}
+.btn-credit:hover{background:rgba(43,106,255,.15);}
+.pay-row{display:flex;align-items:center;gap:8px;margin-top:28px;flex-wrap:wrap;}
+.pay-pill{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:7px 14px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;}
+
+/* FAQ */
+.faq{margin-top:52px;max-width:700px;}
+.faq-item{border-bottom:1px solid var(--bd);}
+.faq-q{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;cursor:pointer;padding:22px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:.15s;}
+.faq-q:hover{color:var(--blue-lt);}
+.faq-ch{font-size:20px;color:var(--text3);transition:transform .2s;flex-shrink:0;}
+.faq-item.open .faq-ch{transform:rotate(45deg);color:var(--blue-lt);}
+.faq-a{font-size:14px;color:var(--text2);line-height:1.8;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s;}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:20px;}
+
+/* CTA */
+.cta-banner{margin:80px 0;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--blue-bd);border-radius:var(--r3);padding:72px 48px;text-align:center;position:relative;overflow:hidden;}
+.cta-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(43,106,255,.1),transparent 60%);}
+.cta-banner::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 100%,rgba(0,229,180,.06),transparent 60%);}
+.cta-banner h2{font-family:'Syne',sans-serif;font-size:clamp(28px,4.5vw,44px);font-weight:800;letter-spacing:-1px;margin-bottom:16px;position:relative;z-index:1;}
+.cta-banner p{color:var(--text2);margin-bottom:36px;font-size:17px;max-width:500px;margin-left:auto;margin-right:auto;position:relative;z-index:1;line-height:1.7;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--bd);padding:40px 0;}
+.footer-inner{max-width:1100px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;}
+.footer-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.footer-logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--blue-lt));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.footer-logo-text{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
+.footer-links{display:flex;gap:22px;flex-wrap:wrap;}
+.footer-links a{color:var(--text3);text-decoration:none;font-size:13px;transition:.15s;}
+.footer-links a:hover{color:var(--text2);}
+.footer-copy{font-size:12px;color:var(--text4);}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(7,12,24,.8);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r3);width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow3);}
+.modal-head{padding:24px 30px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h2{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
+.modal-close{background:var(--bg3);border:none;color:var(--text2);font-size:15px;cursor:pointer;width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;transition:.15s;}
+.modal-close:hover{background:var(--red-bg);color:var(--red);}
+.modal-body{padding:30px;overflow-y:auto;flex:1;}
+.modal-body h3{font-size:11px;font-weight:700;color:var(--mint);text-transform:uppercase;letter-spacing:1.2px;margin:24px 0 8px;}
+.modal-body h3:first-child{margin-top:0;}
+.modal-body p{font-size:13px;color:var(--text2);line-height:1.85;margin-bottom:8px;}
+.modal-body ul{margin:6px 0 12px 16px;}
+.modal-body ul li{font-size:13px;color:var(--text2);line-height:1.85;}
+.modal-body strong{color:var(--text);}
+.modal-body a{color:var(--blue-lt);}
+.legal-tag{display:inline-block;background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-bd);font-size:10px;font-weight:700;padding:3px 11px;border-radius:20px;letter-spacing:.5px;margin-bottom:20px;}
+
+/* COOKIE */
+#cookieBanner{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--bd2);padding:18px 30px;z-index:999;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;transform:translateY(100%);transition:transform .4s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 40px rgba(0,0,0,.5);}
+#cookieBanner.show{transform:translateY(0);}
+.cookie-text{font-size:13px;color:var(--text2);flex:1;line-height:1.65;}
+.cookie-text a{color:var(--blue-lt);cursor:pointer;}
+.cookie-btns{display:flex;gap:8px;flex-shrink:0;}
+.c-accept{background:linear-gradient(135deg,var(--blue),var(--blue-lt));color:white;border:none;border-radius:var(--r);padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.c-accept:hover{transform:translateY(-1px);}
+.c-decline{background:transparent;color:var(--text3);border:1px solid var(--bd);border-radius:var(--r);padding:10px 16px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;}
+.c-decline:hover{color:var(--text2);}
+
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .pricing-grid{grid-template-columns:1fr;}
+  .steps-grid{grid-template-columns:1fr 1fr;gap:32px;}
+  .steps-grid::before{display:none;}
+  .stats-strip{grid-template-columns:1fr 1fr;}
+  .stat-it:nth-child(2){border-right:none;}
+  .stat-it:nth-child(n+3){border-top:1px solid var(--bd);}
+  .mockup-grid{grid-template-columns:1fr 1fr;}
+  .credits-row{grid-template-columns:1fr;}
+  .cta-banner{padding:48px 28px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">🏨</div>
+      <div>
+        <div class="nav-logo-name">Swiss Concierge AI</div>
+        <div class="nav-logo-sub">by ZeroGen · Kloten, Schweiz</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#ablauf">Ablauf</a>
+      <a href="#pricing">Preise</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="swiss-concierge.html" class="nav-cta">App öffnen →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div style="position:relative;z-index:1;width:100%">
+    <div class="hero-badge"><span class="badge-dot"></span> Swiss Made · KI-Gästebriefing</div>
+    <h1>
+      <span style="color:var(--text)">Gäste begeistern –</span><br>
+      <span class="hl">vollautomatisch.</span>
+    </h1>
+    <p class="hero-sub">Swiss Concierge AI erstellt täglich personalisierte Gästebriefings für Hotels und Airbnbs – mehrsprachig, mit Echtzeit-Wetter, Aufenthaltsplan und QR-Code.</p>
+    <div class="hero-btns">
+      <a href="swiss-concierge.html" class="btn-hero">Kostenlos starten →</a>
+      <a href="#features" class="btn-hero-o">Features entdecken</a>
+    </div>
+    <div class="hero-note">10 kostenlose Credits · Keine Kreditkarte nötig</div>
+
+    <div class="hero-mockup">
+      <div class="mockup-wrap">
+        <div class="mockup-bar">
+          <div class="mdot" style="background:#ff4d6a"></div>
+          <div class="mdot" style="background:#ffb547"></div>
+          <div class="mdot" style="background:#00e5b4"></div>
+          <div class="mockup-url">swiss-concierge.html · Swiss Concierge AI v3</div>
+        </div>
+        <div class="mockup-grid">
+          <div class="mc"><div class="mc-top">Standorte</div><div class="mc-val">3</div><div class="mc-sub">Hotels & Airbnbs</div></div>
+          <div class="mc"><div class="mc-top">Report heute</div><div class="mc-val" style="color:var(--mint)">3</div><div class="mc-sub">Alle generiert ✓</div></div>
+          <div class="mc"><div class="mc-top">Credits</div><div class="mc-val" style="color:var(--blue-lt)">47</div><div class="mc-sub">Pro Plan aktiv</div></div>
+        </div>
+        <div class="mockup-report">
+          <div class="mr-hd">Tagesbriefing · Hotel Alpenblick · Heute</div>
+          <div class="mr-line" style="width:92%"></div>
+          <div class="mr-line" style="width:78%"></div>
+          <div class="mr-line" style="width:88%"></div>
+          <div class="mr-line" style="width:65%"></div>
+          <div class="mr-pills">
+            <span class="mr-pill pill-g">DE ✓</span>
+            <span class="mr-pill pill-g">EN ✓</span>
+            <span class="mr-pill pill-g">FR ✓</span>
+            <span class="mr-pill pill-g">IT ✓</span>
+            <span class="mr-pill pill-a">06:00 Auto-Job ✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGOS -->
+<div class="logos">
+  <div class="wrap">
+    <div class="logos-lbl">Powered by</div>
+    <div class="logos-row">
+      <div class="logo-chip">🔥 Firebase</div>
+      <div class="logo-chip">🤖 Groq AI</div>
+      <div class="logo-chip">💳 Stripe</div>
+      <div class="logo-chip">🗺️ OpenStreetMap</div>
+      <div class="logo-chip">🌤️ Open-Meteo</div>
+      <div class="logo-chip">🇨🇭 Swiss Hosted</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<section class="section" style="padding-bottom:0">
+  <div class="wrap">
+    <div class="stats-strip">
+      <div class="stat-it stat-item"><div class="sv">4</div><div class="sl">Sprachen automatisch</div></div>
+      <div class="stat-it stat-item"><div class="sv">&lt;5s</div><div class="sl">Report-Generierung</div></div>
+      <div class="stat-it stat-item"><div class="sv">100%</div><div class="sl">Automatisiert</div></div>
+      <div class="stat-it stat-item"><div class="sv">CHF 28</div><div class="sl">Infra-Kosten/Jahr</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="s-lbl">Features</div>
+    <div class="s-title">Alles was moderne Gastgeber brauchen.</div>
+    <p class="s-sub">Von der automatischen Report-Generierung bis zum persönlichen Aufenthaltsplan – Swiss Concierge AI übernimmt den ganzen Gästeservice.</p>
+    <div class="feat-grid">
+      <div class="feat-card c1"><span class="feat-icon">🤖</span><div class="feat-title">KI-Tagesbriefing</div><div class="feat-desc">Groq Llama generiert täglich um 06:00 Uhr ein frisches, persönliches Briefing – vollautomatisch, ohne Aufwand.</div><span class="feat-tag t-blue">Automatisch</span></div>
+      <div class="feat-card c2"><span class="feat-icon">🌍</span><div class="feat-title">4 Sprachen</div><div class="feat-desc">Deutsch, Englisch, Französisch und Italienisch in einem Durchgang. Gäste wählen die Sprache selbst.</div><span class="feat-tag t-mint">DE · EN · FR · IT</span></div>
+      <div class="feat-card c1"><span class="feat-icon">☀️</span><div class="feat-title">Echtzeit-Wetter</div><div class="feat-desc">Open-Meteo liefert Temperatur, Regen, Wind. Das Briefing passt Aktivitätsempfehlungen ans Wetter an.</div><span class="feat-tag t-blue">Live-Daten</span></div>
+      <div class="feat-card c4"><span class="feat-icon">📅</span><div class="feat-title">Aufenthaltsplan</div><div class="feat-desc">Strukturierter Tagesplan mit Aktivitäten, Restaurants und Shopping – je nach Unterkunftstyp und Gäste-Profil.</div><span class="feat-tag t-purple">Personalisiert</span></div>
+      <div class="feat-card c3"><span class="feat-icon">🏨</span><div class="feat-title">Hotel & Airbnb</div><div class="feat-desc">Verschiedene Briefings je nach Typ. Airbnb: Supermarkt-Tipps. Hotel: Rezeptionsinfos. Hostel: Günstig-Tipps.</div><span class="feat-tag t-amber">Typ-basiert</span></div>
+      <div class="feat-card c2"><span class="feat-icon">📱</span><div class="feat-title">QR-Code Ready</div><div class="feat-desc">Einzigartiger Link pro Standort. QR-Code ausdrucken, ins Zimmer legen – Gäste scannen, fertig.</div><span class="feat-tag t-mint">Kein App-Download</span></div>
+      <div class="feat-card c1"><span class="feat-icon">🍽️</span><div class="feat-title">Lokale Empfehlungen</div><div class="feat-desc">OpenStreetMap liefert echte Restaurants, Supermärkte und Aktivitäten in der Nähe – mit Google Maps Links.</div><span class="feat-tag t-blue">Klickbare Links</span></div>
+      <div class="feat-card c4"><span class="feat-icon">👤</span><div class="feat-title">Gast-Personalisierung</div><div class="feat-desc">Admin trägt Gast-Name und Aufenthaltsdaten ein. Briefing beginnt mit «Liebe Familie Müller» – persönlich.</div><span class="feat-tag t-purple">Persönlich</span></div>
+      <div class="feat-card c2"><span class="feat-icon">📄</span><div class="feat-title">PDF Download</div><div class="feat-desc">Gäste laden Report und Aufenthaltsplan als formatiertes PDF herunter – auch offline auf jedem Gerät.</div><span class="feat-tag t-mint">Offline-ready</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="section" id="ablauf" style="background:var(--bg2);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div class="wrap">
+    <div class="s-lbl">Ablauf</div>
+    <div class="s-title">In 4 Schritten live.</div>
+    <div class="steps-grid">
+      <div class="step"><div class="step-num">1</div><div class="step-title">Account erstellen</div><div class="step-desc">Registrieren, Plan wählen. 10 kostenlose Credits – keine Kreditkarte nötig.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-title">Hotel anlegen</div><div class="step-desc">Name, Adresse, WLAN, Typ und Gäste-Profil eingeben. Koordinaten werden automatisch gefunden.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-title">Briefing generieren</div><div class="step-desc">KI erstellt Briefing in 4 Sprachen + Aufenthaltsplan in &lt;10 Sekunden. Oder täglich automatisch.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-title">QR-Code platzieren</div><div class="step-desc">Link kopieren → QR-Code erstellen → ausdrucken → ins Zimmer. Gäste scannen, fertig.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section">
+  <div class="wrap">
+    <div class="s-lbl">Stimmen</div>
+    <div class="s-title">Was Gastgeber sagen.</div>
+    <div class="testi-grid">
+      <div class="testi"><div class="testi-stars">★★★★★</div><div class="testi-text">«Endlich spare ich mir den täglichen Aufwand. Der Report ist jeden Morgen fertig und unsere Gäste lieben die persönliche Note.»</div><div class="testi-author"><div class="testi-av">M</div><div><div class="testi-name">Marina K.</div><div class="testi-role">Hotel Seegarten, Zürich</div></div></div></div>
+      <div class="testi"><div class="testi-stars">★★★★★</div><div class="testi-text">«Als Airbnb-Host mit 4 Wohnungen ist das Gold wert. Jede Wohnung hat ihren QR-Code und die Gäste fragen kaum noch nach.»</div><div class="testi-author"><div class="testi-av">T</div><div><div class="testi-name">Thomas B.</div><div class="testi-role">Airbnb-Host, Luzern</div></div></div></div>
+      <div class="testi"><div class="testi-stars">★★★★★</div><div class="testi-text">«Der mehrsprachige Report ist für unsere internationalen Gäste perfekt. Vorher nur Deutsch – jetzt läuft alles automatisch.»</div><div class="testi-author"><div class="testi-av">S</div><div><div class="testi-name">Sandra F.</div><div class="testi-role">B&B Alpenrose, Interlaken</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing" style="background:var(--bg2);border-top:1px solid var(--bd)">
+  <div class="wrap">
+    <div class="s-lbl">Preise</div>
+    <div class="s-title">Transparent. Flexibel. Swiss-Made.</div>
+    <p class="s-sub">Monatsabo oder Pay-on-Demand – du wählst was passt. Keine versteckten Kosten.</p>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">CHF 29<span>/Monat</span></div>
+        <div class="plan-desc">Ideal für kleine Hotels oder B&Bs mit einem Standort.</div>
+        <ul class="plan-features">
+          <li>1 Standort</li><li>30 Reports/Monat</li><li>4 Sprachen (DE/EN/FR/IT)</li>
+          <li>Echtzeit-Wetter</li><li>QR-Code Link</li><li>Aufenthaltsplan</li>
+          <li class="dim">Mehrere Standorte</li><li class="dim">API-Zugang</li>
+        </ul>
+        <a href="https://buy.stripe.com/4gM14nb8gg9Lc3sdrW18c00" class="btn-plan btn-plan-o" target="_blank">Starter wählen</a>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">BELIEBT</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">CHF 79<span>/Monat</span></div>
+        <div class="plan-desc">Für Hotelgruppen und Betriebe mit mehreren Standorten.</div>
+        <ul class="plan-features">
+          <li>5 Standorte</li><li>200 Reports/Monat</li><li>4 Sprachen (DE/EN/FR/IT)</li>
+          <li>Echtzeit-Wetter</li><li>QR-Code Link</li><li>Aufenthaltsplan</li>
+          <li>Credits zukaufbar</li><li class="dim">API-Zugang</li>
+        </ul>
+        <a href="https://buy.stripe.com/6oUaEX1xG6zb0kKbjO18c01" class="btn-plan btn-plan-p" target="_blank">Pro wählen</a>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price">CHF 199<span>/Monat</span></div>
+        <div class="plan-desc">Für grosse Ketten und Hospitality-Gruppen.</div>
+        <ul class="plan-features">
+          <li>Unlimitierte Standorte</li><li>Unlimitierte Reports</li><li>4 Sprachen (DE/EN/FR/IT)</li>
+          <li>Echtzeit-Wetter</li><li>QR-Code Link</li><li>Aufenthaltsplan</li>
+          <li>Credits inklusive</li><li>API-Zugang</li>
+        </ul>
+        <a href="https://buy.stripe.com/00wdR95NW2iV1oOfA418c03" class="btn-plan btn-plan-o" target="_blank">Enterprise wählen</a>
+      </div>
+    </div>
+    <div style="margin-top:70px">
+      <div class="s-lbl">Pay-on-Demand</div>
+      <h3 style="font-family:Syne,sans-serif;font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:-.5px">Report-Credits</h3>
+      <p style="font-size:14px;color:var(--text2)">Kein Abo nötig. Credits verfallen nicht.</p>
+      <div class="credits-row">
+        <div class="ccard"><div class="ccard-amt">50</div><div class="ccard-lbl">Report-Credits</div><div class="ccard-price">CHF 9</div><div class="ccard-per">= CHF 0.18 pro Report</div><a href="https://buy.stripe.com/3cIaEX5NWcXzaZo5Zu18c04" class="btn-credit" target="_blank">Kaufen →</a></div>
+        <div class="ccard" style="border-color:var(--blue-bd)"><div class="ccard-amt">200</div><div class="ccard-lbl">Report-Credits</div><div class="ccard-price">CHF 29</div><div class="ccard-per">= CHF 0.14 pro Report</div><a href="https://buy.stripe.com/6oUeVda4c7DfebAew018c05" class="btn-credit" target="_blank">Kaufen →</a></div>
+      </div>
+      <div class="pay-row">
+        <span class="pay-pill">💳 Kreditkarte</span>
+        <span class="pay-pill">🟦 Twint</span>
+        <span class="pay-pill">🏦 SEPA</span>
+        <span class="pay-pill">🔒 SSL via Stripe</span>
+        <span class="pay-pill">🇨🇭 CHF</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="s-lbl">FAQ</div>
+    <div class="s-title">Häufige Fragen.</div>
+    <div class="faq">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Kann ich jederzeit kündigen?<span class="faq-ch">+</span></div><div class="faq-a">Ja. Abo jederzeit im Stripe Kundenportal kündigen. Es läuft bis Ende der bezahlten Periode.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Was passiert wenn mein Budget aufgebraucht ist?<span class="faq-ch">+</span></div><div class="faq-a">Zusätzliche Credits kaufen (Pay-on-Demand) oder auf höheren Plan upgraden. Du siehst den Stand jederzeit im Dashboard.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Funktioniert das mit Twint?<span class="faq-ch">+</span></div><div class="faq-a">Ja. Stripe unterstützt Twint für Schweizer Kunden nativ. Erscheint automatisch bei der Bezahlung.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Brauche ich technisches Wissen?<span class="faq-ch">+</span></div><div class="faq-a">Nein. Nur ein Browser. Keine Installation. Einrichten dauert ca. 10 Minuten.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Wo werden die Daten gespeichert?<span class="faq-ch">+</span></div><div class="faq-a">Alle Daten in Google Firebase (EU). Zahlungsdaten ausschliesslich bei Stripe – wir sehen keine Kartendaten.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Gibt es eine Testphase?<span class="faq-ch">+</span></div><div class="faq-a">Ja. 10 kostenlose Report-Credits nach Registrierung – ohne Kreditkarte, ohne Zeitlimit.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Funktioniert es für Airbnb und Hotels?<span class="faq-ch">+</span></div><div class="faq-a">Ja. Du wählst beim Anlegen den Typ (Hotel, Airbnb, B&B, Hostel) und das Gäste-Profil. Das Briefing passt sich automatisch an.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:0 0 80px">
+  <div class="wrap">
+    <div class="cta-banner">
+      <h2>Bereit, Gäste zu begeistern?</h2>
+      <p>Starte noch heute – 10 kostenlose Credits, keine Kreditkarte nötig. In 10 Minuten live.</p>
+      <a href="swiss-concierge.html" class="btn-hero" style="display:inline-flex;font-size:16px;padding:16px 40px;position:relative;z-index:1">Jetzt kostenlos starten →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="#" class="footer-logo">
+      <div class="footer-logo-icon">🏨</div>
+      <div class="footer-logo-text">Swiss Concierge AI</div>
+    </a>
+    <div class="footer-links">
+      <a href="#" onclick="openModal('impressum');return false">Impressum</a>
+      <a href="#" onclick="openModal('datenschutz');return false">Datenschutz</a>
+      <a href="#" onclick="openModal('agb');return false">AGB</a>
+      <a href="swiss-concierge.html">App</a>
+      <a href="mailto:zerogen-agency@gmail.com">Kontakt</a>
+    </div>
+    <div class="footer-copy">© 2025 Sandro Ruesch · ZeroGen · Kloten, Schweiz</div>
+  </div>
+</footer>
+
+<!-- COOKIE BANNER -->
+<div id="cookieBanner">
+  <div class="cookie-text">Wir verwenden technisch notwendige Cookies für Firebase Authentication. Keine Werbe-Cookies. <a onclick="openModal('datenschutz');return false">Datenschutz</a></div>
+  <div class="cookie-btns">
+    <button class="c-decline" onclick="closeCookieBanner()">Ablehnen</button>
+    <button class="c-accept" onclick="acceptCookies()">Akzeptieren</button>
+  </div>
+</div>
+
+<!-- IMPRESSUM -->
+<div class="modal-overlay" id="modal-impressum" onclick="closeModalOutside(event,'impressum')">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Impressum</h2><button class="modal-close" onclick="closeModal('impressum')">✕</button></div>
+    <div class="modal-body">
+      <span class="legal-tag">PFLICHTANGABEN GEM. ART. 3 UWG</span>
+      <h3>Verantwortlich</h3><p><strong>Sandro Ruesch</strong><br>Sonnhaldenstrasse 17<br>8302 Kloten, Schweiz</p>
+      <h3>Kontakt</h3><p><a href="mailto:zerogen-agency@gmail.com">zerogen-agency@gmail.com</a><br><a href="https://samkruw.github.io/SwissConcierge/" target="_blank">samkruw.github.io/SwissConcierge</a></p>
+      <h3>Unternehmensform</h3><p>Selbständige Einzelperson. Nicht im Handelsregister eingetragen. Keine MWST-Pflicht (Umsatz unter CHF 100'000).</p>
+      <h3>Haftungsausschluss</h3><p>Inhalte mit grösster Sorgfalt erstellt. Für Richtigkeit, Vollständigkeit und Aktualität keine Gewähr.</p>
+      <h3>Externe Links</h3><p>Für Inhalte verlinkter Seiten ist der jeweilige Anbieter verantwortlich.</p>
+      <h3>Urheberrecht</h3><p>Alle Inhalte unterliegen dem schweizerischen Urheberrecht. Vervielfältigung bedarf schriftlicher Zustimmung.</p>
+    </div>
+  </div>
+</div>
+
+<!-- DATENSCHUTZ -->
+<div class="modal-overlay" id="modal-datenschutz" onclick="closeModalOutside(event,'datenschutz')">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Datenschutzerklärung</h2><button class="modal-close" onclick="closeModal('datenschutz')">✕</button></div>
+    <div class="modal-body">
+      <span class="legal-tag">REVDSG-KONFORM · STAND APRIL 2025</span>
+      <h3>Verantwortliche Stelle</h3><p><strong>Sandro Ruesch</strong>, Sonnhaldenstrasse 17, 8302 Kloten · <a href="mailto:zerogen-agency@gmail.com">zerogen-agency@gmail.com</a></p>
+      <h3>Erhobene Daten</h3><ul><li><strong>E-Mail-Adresse</strong> – Registrierung und Anmeldung</li><li><strong>Zahlungsdaten</strong> – ausschliesslich durch Stripe</li><li><strong>Standortdaten</strong> – Adresse und Koordinaten der Unterkunft</li><li><strong>Gäste-Informationen</strong> – Name und Aufenthaltsdaten</li><li><strong>Nutzungsdaten</strong> – Firebase-Logs (anonymisiert)</li></ul>
+      <h3>Drittanbieter</h3><ul>
+        <li><strong>Google Firebase</strong> (EU) – Auth und Datenbank. <a href="https://firebase.google.com/support/privacy" target="_blank">Datenschutz ↗</a></li>
+        <li><strong>Stripe Inc.</strong> (USA) – Zahlungsabwicklung. <a href="https://stripe.com/ch/privacy" target="_blank">Datenschutz ↗</a></li>
+        <li><strong>Groq Inc.</strong> (USA) – KI, keine Trainingsdaten. <a href="https://groq.com/privacy-policy/" target="_blank">Datenschutz ↗</a></li>
+        <li><strong>Open-Meteo</strong> (CH) – Wetter, keine personenbezogenen Daten</li>
+        <li><strong>OpenStreetMap</strong> – Karte, keine personenbezogenen Daten</li>
+        <li><strong>GitHub Pages</strong> (USA) – Hosting. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank">Datenschutz ↗</a></li>
+      </ul>
+      <h3>Cookies</h3><p>Ausschliesslich technisch notwendige Cookies für Firebase-Auth. Keine Werbe- oder Tracking-Cookies.</p>
+      <h3>Datenspeicherung & Löschung</h3><p>Kontodaten gespeichert solange Konto aktiv. Nach Kündigung Löschung innerhalb 30 Tagen.</p>
+      <h3>Ihre Rechte (revDSG)</h3><p>Auskunft, Berichtigung, Löschung, Datenübertragbarkeit. Anfragen: <a href="mailto:zerogen-agency@gmail.com">zerogen-agency@gmail.com</a></p>
+      <h3>Internationale Datenübermittlung</h3><p>Anbieter in USA (Firebase, Stripe, Groq, GitHub): Übermittlung auf Basis von Standardvertragsklauseln (SCC).</p>
+    </div>
+  </div>
+</div>
+
+<!-- AGB -->
+<div class="modal-overlay" id="modal-agb" onclick="closeModalOutside(event,'agb')">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Allgemeine Geschäftsbedingungen</h2><button class="modal-close" onclick="closeModal('agb')">✕</button></div>
+    <div class="modal-body">
+      <span class="legal-tag">STAND APRIL 2025 · SCHWEIZER RECHT</span>
+      <h3>1. Geltungsbereich</h3><p>Diese AGB gelten für alle Verträge zwischen Sandro Ruesch («Anbieter») und dem Kunden («Nutzer») betreffend Swiss Concierge AI.</p>
+      <h3>2. Vertragsschluss</h3><p>Vertrag kommt mit Registrierung und Abo-Bestätigung zustande.</p>
+      <h3>3. Leistungsumfang</h3><ul><li>Automatische KI-Generierung von Gästebriefings</li><li>Mehrsprachige Reports (DE/EN/FR/IT)</li><li>Aufenthaltsplanung und lokale Empfehlungen</li><li>QR-Code-basierter Gäste-Zugang</li></ul>
+      <h3>4. Preise und Zahlung</h3><p>Monatsabonnements im Voraus. Credits nicht rückerstattbar. Zahlung über Stripe. Alle Preise in CHF.</p>
+      <h3>5. Kündigung</h3><p>Abo jederzeit auf Ende der laufenden Periode kündbar via Stripe-Kundenportal.</p>
+      <h3>6. Verfügbarkeit</h3><p>Angestrebte Verfügbarkeit 99%. Bei Ausfällen >24h anteilige Gutschrift.</p>
+      <h3>7. Haftungsbeschränkung</h3><p>Keine Haftung für Schäden durch KI-generierte Inhalte. Haftung begrenzt auf bezahlten Betrag der letzten 3 Monate.</p>
+      <h3>8. Nutzerpflichten</h3><p>Kein Missbrauch. Zugangsdaten vertraulich behandeln.</p>
+      <h3>9. KI-Inhalte</h3><p>Nutzer verantwortlich für Prüfung generierter Inhalte vor Weitergabe an Gäste.</p>
+      <h3>10. AGB-Änderungen</h3><p>Mit 30-tägiger Vorankündigung per E-Mail. Ausserordentliches Kündigungsrecht bei wesentlichen Änderungen.</p>
+      <h3>11. Recht & Gerichtsstand</h3><p>Schweizer Recht. Gerichtsstand Kloten (ZH), Schweiz.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleFaq(el){const item=el.closest('.faq-item');const w=item.classList.contains('open');document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));if(!w)item.classList.add('open');}
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');document.body.style.overflow='';}
+function closeModalOutside(e,id){if(e.target.id==='modal-'+id)closeModal(id);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['impressum','datenschutz','agb'].forEach(closeModal);document.body.style.overflow='';}});
+function showCookieBanner(){if(!localStorage.getItem('cookieConsent'))setTimeout(()=>document.getElementById('cookieBanner').classList.add('show'),1500);}
+function acceptCookies(){localStorage.setItem('cookieConsent','accepted');closeCookieBanner();}
+function closeCookieBanner(){document.getElementById('cookieBanner').classList.remove('show');if(!localStorage.getItem('cookieConsent'))localStorage.setItem('cookieConsent','declined');}
+showCookieBanner();
+</script>
+</body>
+</html>
