@@ -618,16 +618,94 @@ async function generateReport() {
     const guestName      = document.getElementById('guestNameField')?.value.trim() || '';
     const guestArrival   = document.getElementById('guestArrivalField')?.value  || '';
     const guestDeparture = document.getElementById('guestDepartureField')?.value || '';
+    const groqKey        = getGroqKey();
     const existing = await db.collection('reports').where('locationId','==',locId).where('date','==',date).get();
-    const payload = Object.assign({locationId:locId,date,source:'manual',guestName,guestArrival,guestDeparture,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},results);
+    const payload = Object.assign({locationId:locId,date,source:'manual',guestName,guestArrival,guestDeparture,groqKey,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},results);
     if(!existing.empty) { await existing.docs[0].ref.update(payload); }
     else { payload.createdAt=firebase.firestore.FieldValue.serverTimestamp(); await db.collection('reports').add(payload); }
     await loadReports();
+
+    // Aufenthaltsplan parallel generieren
+    prog.textContent = 'Generiere Aufenthaltsplan...';
+    try {
+      await generateAndSavePlan(locId, loc, guestName, guestArrival, guestDeparture, groqKey, date);
+      prog.textContent = 'Fertig! Report + Aufenthaltsplan generiert.';
+    } catch(e) {
+      prog.textContent = 'Report gespeichert. Plan-Fehler: '+e.message;
+    }
+  } else {
+    prog.textContent = 'Fertig! '+Object.keys(results).length+' Sprache(n) generiert.';
   }
 
-  prog.textContent = 'Fertig! '+Object.keys(results).length+' Sprache(n) generiert.';
   setTimeout(()=>{prog.style.display='none';},3000);
-  toast('Report generiert!');
+  toast('Report + Plan generiert!');
+}
+
+// ── PLAN AUTOMATISCH GENERIEREN ──
+async function generateAndSavePlan(locId, loc, guestName, guestArrival, guestDeparture, groqKey, checkinDate) {
+  if (!groqKey) return;
+
+  // Aufenthaltsdauer berechnen (Fallback: 2 Naechte)
+  let nights = 2, days = 3;
+  if (guestArrival && guestDeparture) {
+    nights = Math.max(1, Math.round((new Date(guestDeparture)-new Date(guestArrival))/(1000*60*60*24)));
+    days   = nights + 1;
+  } else if (guestArrival) {
+    // Nur Anreise bekannt - nehme 2 Naechte an
+    nights = 2; days = 3;
+  }
+
+  const checkinTime  = loc.checkin  || '15:00';
+  const checkoutTime = loc.checkout || '11:00';
+  const guestProfile = loc.guestProfile || 'alle';
+  const locType      = loc.locType || 'hotel';
+
+  // Wetter laden
+  let wetterInfo = '';
+  try {
+    const w = await fetchWeather(loc.lat, loc.lon);
+    if (w.ok) wetterInfo = 'Wetter: '+w.wetter+', '+w.tempAkt+'C. '+w.aktivitaeten+'.';
+  } catch(e) {}
+
+  const prompt =
+    'Aufenthaltsplan auf Deutsch fuer '+(guestName||'Gaeste')+' in '+loc.name+', '+loc.address+'.' +
+    ' Unterkunftstyp: '+locType+'. Gaeste: '+guestProfile+'.' +
+    ' '+nights+' Nacht/Naechte. Check-in '+checkinTime+', Check-out '+checkoutTime+'.' +
+    (wetterInfo ? ' '+wetterInfo : '') +
+    '\n\nFormat EXAKT:' +
+    '\nTag 1: [Beschreibung]' +
+    '\n- Vormittag: [Ort]: [1 Satz Beschreibung]' +
+    '\n- Mittagessen: [Restaurant]: [1 Satz]' +
+    '\n- Nachmittag: [Ort]: [1 Satz]' +
+    '\n- Abendessen: [Restaurant]: [1 Satz]' +
+    '\n(weitere Tage gleich)' +
+    '\nNur reale Orte aus '+loc.address+'. SBB erwaehnen. Max 300 Woerter.';
+
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer '+groqKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model:'llama-3.1-8b-instant', max_tokens:500, messages:[{role:'user',content:prompt}] })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  const planText = d.choices[0].message.content.trim();
+
+  // Bestehenden Plan loeschen und neu speichern
+  const existing = await db.collection('stay_plans').where('locationId','==',locId).get();
+  const batch = db.batch();
+  existing.docs.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
+
+  await db.collection('stay_plans').add({
+    locationId: locId,
+    checkin:    guestArrival  || checkinDate || '',
+    checkout:   guestDeparture || '',
+    lang:       'de',
+    content:    planText,
+    groqKey,
+    userId:     currentUser.uid,
+    createdAt:  firebase.firestore.FieldValue.serverTimestamp()
+  });
 }
 
 async function saveManual() {
@@ -719,7 +797,15 @@ async function runJobNow() {
       const payload=Object.assign({locationId:doc.id,date:dateStr,source:'cron',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},results);
       if(!existing.empty){await existing.docs[0].ref.update(payload);}
       else{payload.createdAt=firebase.firestore.FieldValue.serverTimestamp();await db.collection('reports').add(payload);}
-      log('  OK – DE/EN/FR/IT gespeichert','#10b981'); ok++;
+      log('  OK – DE/EN/FR/IT gespeichert','#10b981');
+
+      // Aufenthaltsplan automatisch generieren
+      try {
+        await generateAndSavePlan(doc.id, loc, '', '', '', key, dateStr);
+        log('  Plan generiert','#10b981');
+      } catch(pe) { log('  Plan-Fehler: '+pe.message); }
+
+      ok++;
       await new Promise(r=>setTimeout(r,800));
     }catch(e){log('  Fehler: '+e.message,'var(--red)');fail++;}
   }
@@ -1047,29 +1133,20 @@ function renderPlanHTML(planText, lat, lon, address) {
 
 
 function togglePlanRequest() {
-  const reqCard  = document.getElementById('guestPlanRequestCard');
   const planCard = document.getElementById('guestPlanCard');
+  const reqCard  = document.getElementById('guestPlanRequestCard');
   const btn      = document.getElementById('planToggleBtn');
 
-  // Wenn Plan schon sichtbar -> ausblenden
+  // Wenn Plan-Card bereits sichtbar → togglePlanView (auf/zuklappen)
   if (planCard && planCard.style.display !== 'none') {
-    planCard.style.display = 'none';
-    if(btn) btn.textContent = '📅 Aufenthaltsplan anfordern';
+    togglePlanView();
     return;
   }
-  // Wenn Request-Card sichtbar -> ausblenden
-  if (reqCard && reqCard.style.display !== 'none') {
-    reqCard.style.display = 'none';
-    if(btn) btn.textContent = '📅 Aufenthaltsplan anfordern';
-    return;
-  }
-  // Plan laden: gespeicherten anzeigen oder Anfrage-Card
-  if (planCard && document.getElementById('guestPlanContent')?.children.length > 0) {
-    planCard.style.display = 'block';
-    if(btn) btn.textContent = '✕ Aufenthaltsplan ausblenden';
-  } else if (reqCard) {
-    reqCard.style.display = 'block';
-    if(btn) btn.textContent = '✕ Schliessen';
+  // Sonst: Request-Card oder Plan-Card anzeigen
+  if (reqCard) {
+    const isReqVisible = reqCard.style.display !== 'none';
+    reqCard.style.display = isReqVisible ? 'none' : 'block';
+    if(btn) btn.innerHTML = isReqVisible ? '📅 Aufenthaltsplan anfordern' : '✕ Schliessen';
   }
 }
 
@@ -1151,19 +1228,51 @@ async function requestGuestPlan() {
   }
 }
 
+function togglePlanView() {
+  const collapsed = document.getElementById('guestPlanCollapsed');
+  const content   = document.getElementById('guestPlanContent');
+  const chevron   = document.getElementById('planChevron');
+  const isOpen    = content && content.style.display !== 'none';
+
+  if (isOpen) {
+    if(content)   content.style.display   = 'none';
+    if(collapsed) collapsed.style.display = 'block';
+    if(chevron)   chevron.textContent     = '▼';
+  } else {
+    if(content)   content.style.display   = 'block';
+    if(collapsed) collapsed.style.display = 'none';
+    if(chevron)   chevron.textContent     = '▲';
+  }
+}
+
+
 function showGuestPlan(planText, loc) {
-  document.getElementById('guestPlanRequestCard').style.display = 'none';
+  // Request-Card ausblenden
+  const reqCard = document.getElementById('guestPlanRequestCard');
+  if(reqCard) reqCard.style.display = 'none';
+
+  // Plan-Card anzeigen (aber Inhalt eingeklappt)
   const planCard = document.getElementById('guestPlanCard');
-  planCard.style.display = 'block';
+  if(planCard) planCard.style.display = 'block';
+
+  // Inhalt rendern (noch verborgen)
   const contentEl = document.getElementById('guestPlanContent');
-  contentEl.innerHTML = '';
-  const rendered = renderPlanHTML(planText, loc.lat, loc.lon, loc.address);
-  contentEl.appendChild(rendered);
-  contentEl.dataset.rawText = planText;
-  contentEl.dataset.locName = loc.name;
-  // Button-Text updaten
+  if(contentEl) {
+    contentEl.innerHTML = '';
+    const rendered = renderPlanHTML(planText, loc.lat, loc.lon, loc.address);
+    contentEl.appendChild(rendered);
+    contentEl.dataset.rawText = planText;
+    contentEl.dataset.locName = loc.name;
+    contentEl.style.display = 'none'; // bleibt eingeklappt
+  }
+
+  // Collapsed-Preview anzeigen
+  const collapsed = document.getElementById('guestPlanCollapsed');
+  if(collapsed) collapsed.style.display = 'block';
+
+  // Toggle-Button im Report updaten
   const btn = document.getElementById('planToggleBtn');
-  if(btn) btn.textContent = '✕ Aufenthaltsplan ausblenden';
+  if(btn) btn.innerHTML = '📅 Aufenthaltsplan anzeigen';
 }
 
 
